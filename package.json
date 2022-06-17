@@ -76,18 +76,21 @@
     "@babel/core": "^7.17.2",
     "@babel/eslint-parser": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
-    "@digitalroute/cz-conventional-changelog-for-jira": "^7.1.0",
+    "@digitalroute/cz-conventional-changelog-for-jira": "^7.3.0",
     "commitizen": "^4.2.4",
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "lint-staged": ">=10",
     "mem-fs": "^2.2.1",
     "mem-fs-editor": "^9.4.0",
     "prettier": "^2.5.1",
-    "standard-version": "^9.3.2",
-    "lint-staged": ">=10"
+    "standard-version": "^9.3.2"
   },
   "config": {
-    "templateDependencies": {}
+    "templateDependencies": {},
+    "commitizen": {
+      "path": "./commitizen.config.js"
+    }
   }
 }
