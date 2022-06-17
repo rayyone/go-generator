@@ -1,0 +1,13 @@
+package authtfm
+
+import (
+	"<%= appModName %>/app/model"
+)
+
+type BasicPermissionResp struct {
+	*model.PermissionTbl
+}
+
+type PermissionResp struct {
+	*BasicPermissionResp
+}

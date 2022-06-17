@@ -1,0 +1,29 @@
+package database
+
+import (
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/database/migration"
+)
+
+// Migrate executes all migrations exists
+func Migrate(db *gorm.DB) error {
+	options := gormigrate.DefaultOptions
+	options.UseTransaction = true
+	m := gormigrate.New(db, options, []*gormigrate.Migration{
+		migration.CreateUsersTable(),
+		migration.CreateAccessTokensTable(),
+		migration.CreateVerificationCodesTable(),
+		migration.CreateUserSocialsTable(),
+		migration.CreateRolesTable(),
+		migration.CreateRoleUsersTable(),
+		migration.CreatePermissionsTable(),
+		migration.CreatePermissionRolesTable(),
+		migration.AddRoleAndPermissionData(),
+	})
+
+	if err := m.Migrate(); err != nil {
+		return err
+	}
+	return nil
+}

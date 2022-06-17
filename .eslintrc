@@ -1,0 +1,37 @@
+{
+  "root": true,
+  "parser": "@babel/eslint-parser",
+  "plugins": ["prettier"],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 8,
+    "requireConfigFile": false,
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true,
+      "impliedStrict": true,
+      "classes": true
+    }
+  },
+  "extends": [
+    "eslint:recommended",
+    "prettier"
+  ],
+  "env": {
+    "browser": false,
+    "node": true,
+    "es6": true
+  },
+  "settings": {
+    "import/extensions": [
+      ".js"
+    ]
+  },
+  "rules": {
+    "no-new": "off",
+    "no-empty": "off",
+    "no-param-reassign": "off",
+    "global-require": "off",
+    "import/no-cycle": "off",
+    "no-case-declarations": "off"
+  }
+}

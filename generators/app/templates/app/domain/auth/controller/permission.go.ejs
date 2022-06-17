@@ -1,0 +1,185 @@
+package authctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/auth/request"
+	authtfm "<%= appModName %>/app/domain/auth/tfm"
+	"<%= appModName %>/app/errcode"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type PermissionCtl struct {
+	*basectl.BaseController
+}
+
+func NewPermissionCtl(service *containersvc.Service) *PermissionCtl {
+	return &PermissionCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all permissions
+// @Tags         Permission
+// @Accept       json
+// @Produce      json
+// @Param        q	query	string	false	"Search everything"
+// @Param        module	query	string	false	"Search module | ILIKE"
+// @Param        action	query	string	false	"Search action | ILIKE"
+// @Param        description	query	string	false	"Search description | ILIKE"
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.PermissionResp}
+// @Router       /permissions [get]
+func (ctl *PermissionCtl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	permissions, paginator, err := ctl.Service.Permission.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformSlice[model.Permission, authtfm.PermissionResp](permissions)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get permission by ID
+// @Tags         Permission
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Permission ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.PermissionResp}
+// @Router       /permissions/{id} [get]
+func (ctl *PermissionCtl) GetByID(c *gin.Context) {
+	permissionID := c.Param("permissionID")
+	if permissionID == "" {
+		response.RespondError(c, errcode.Validation.New("Permission id is required!"))
+		return
+	}
+	ctl.BasePrepare(c)
+	permission, err := ctl.Service.Permission.Find(ctl.Request, permissionID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.Permission, authtfm.PermissionResp](permission)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "test")
+}
+
+// Store
+// @Security Bearer
+// @Summary      Create a new permission
+// @Tags         Permission
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.NewPermission  true  "Body params"
+// @Success      201  {object}   swagger.ResponseWithData{data=authtfm.PermissionResp}
+// @Router       /permissions [post]
+func (ctl *PermissionCtl) Store(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("permissions.create_update") {
+		return
+	}
+	var params request.NewPermission
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	permission, err := ctl.Service.Permission.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.Permission, authtfm.PermissionResp](permission)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "Permission has been added successfully.")
+}
+
+// Update
+// @Security Bearer
+// @Summary      Update a permission
+// @Tags         Permission
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.UpdatePermission  true  "Body params; Patch update"
+// @Param        id path  string  true  "Permission ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.PermissionResp}
+// @Router       /permissions/{id} [put]
+func (ctl *PermissionCtl) Update(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("permissions.create_update") {
+		return
+	}
+	permissionID := c.Param("permissionID")
+	if permissionID == "" {
+		response.RespondError(c, errcode.Validation.New("Permission id is required!"))
+		return
+	}
+
+	var params request.UpdatePermission
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	permission, err := ctl.Service.Permission.Update(ctl.Request, permissionID, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.Permission, authtfm.PermissionResp](permission)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Permission has been updated successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete a permission
+// @Tags         Permission
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "Permission ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /permissions/{id} [delete]
+func (ctl *PermissionCtl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("permissions.delete") {
+		return
+	}
+	permissionID := c.Param("permissionID")
+	if permissionID == "" {
+		response.RespondError(c, errcode.Validation.New("Permission id is required!"))
+		return
+	}
+
+	err := ctl.Service.Permission.Delete(ctl.Request, permissionID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "Permission has been deleted successfully.")
+}

@@ -1,0 +1,13 @@
+package authtfm
+
+import (
+	"<%= appModName %>/app/model"
+)
+
+type BasicAccessTokenResp struct {
+	*model.AccessTokenTbl
+}
+
+type AccessTokenResp struct {
+	*BasicAccessTokenResp
+}

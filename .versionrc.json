@@ -1,0 +1,15 @@
+{
+  "types": [
+    {"type": "feat", "section": "Features"},
+    {"type": "fix", "section": "Bug Fixes"},
+    {"type": "chore", "section": "Others"},
+    {"type": "refactor", "hidden": true},
+    {"type": "amend", "hidden": true},
+    {"type": "docs", "hidden": true},
+    {"type": "style", "hidden": true},
+    {"type": "perf", "hidden": true},
+    {"type": "test", "hidden": true}
+  ],
+  "commitUrlFormat": "https://github.com/rayyone/base-generator/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/rayyone/base-generator/compare/{{previousTag}}...{{currentTag}}"
+}

@@ -1,0 +1,16 @@
+package model
+
+import (
+	"gorm.io/gorm"
+	"time"
+)
+
+type Timestamps struct {
+	CreatedAt time.Time `json:"created_at" gorm:"type:timestamp with time zone;not null;default:NOW()" firestore:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"type:timestamp with time zone;not null;default:NOW()" firestore:"updated_at"`
+}
+
+type BaseTimestamps struct {
+	Timestamps
+	DeletedAt *gorm.DeletedAt `json:"-" sql:"index" gorm:"type:timestamp with time zone;" firestore:"deleted_at"`
+}

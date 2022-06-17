@@ -1,0 +1,29 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+)
+
+type <%= className %>Tbl struct {
+	ID          string  `json:"id"`
+<%- include('print-props-tbl') %>
+	Timestamps
+}
+
+type <%= className %> struct {
+	<%= className %>Tbl
+}
+
+func (model *<%= className %>) TableName() string {
+	return "<%= tableName %>"
+}
+
+func (model *<%= className %>) GetAccessors() {}
+
+func (modelTbl *<%= className %>Tbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

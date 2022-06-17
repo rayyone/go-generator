@@ -1,0 +1,100 @@
+package main
+
+import (
+	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
+	coreDB "github.com/rayyone/go-core/database"
+	"github.com/rayyone/go-core/helpers/array"
+	"io"
+	"log"
+	"os"
+	"<%= appModName %>/app/database"
+	"<%= appModName %>/app/scheduler"
+	"<%= appModName %>/config"
+	"<%= appModName %>/di"
+	_ "<%= appModName %>/docs"
+	"time"
+)
+
+// @title <%= appModName %>
+// @description <%= project.description %>
+// @host http://localhost:<%= project.projectPort %>
+// @version 0.0.1
+// @BasePath /api/v1
+// @x-logo {"url": "https://rayyone.com/static/media/rayyone.64af782a.svg"}
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+func main() {
+	conf := config.All()
+	if conf.App.GinDebugMode != "" {
+		gin.SetMode(conf.App.GinDebugMode)
+	}
+
+	initSentry(conf)
+	setupLogger()
+	setupCustomValidator()
+	dbConfig := coreDB.NewConfiguration(&conf.Database)
+	db := coreDB.InitDB(dbConfig)
+
+	sqlDB, _ := db.DB()
+
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(10)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(100)
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// DB migrations
+	if err := database.Migrate(db); err != nil {
+		log.Println(err)
+		panic(err.Error())
+	}
+	diContainer, _ := di.InitDiContainer()
+
+	go func() {
+		scheduler.RunCron(diContainer.Services)
+	}()
+
+	server := diContainer.HttpServer
+	server.Serve()
+}
+
+func setupLogger() {
+	gin.DisableConsoleColor() // disable since we write to file log
+
+	logFile, err := os.OpenFile("log/gin.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	errorLogFile, err := os.OpenFile("log/gin_error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)           // log to file & terminal
+	gin.DefaultErrorWriter = io.MultiWriter(errorLogFile, os.Stderr) // log error to file & terminal
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetOutput(gin.DefaultWriter)
+}
+
+func setupCustomValidator() {
+	// if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+	//     _ = v.RegisterValidation("custom", customValidator)
+	// }
+}
+
+func initSentry(conf *config.Configuration) {
+	if array.InArray(conf.App.ENV, []string{"production", "staging"}) && conf.Sentry.DSN != nil {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:         *conf.Sentry.DSN,
+			Environment: conf.App.ENV,
+		}); err != nil {
+			panic("Cannot initialize sentry")
+		}
+	} else {
+		log.Println("Sentry is not set on this stage")
+	}
+}

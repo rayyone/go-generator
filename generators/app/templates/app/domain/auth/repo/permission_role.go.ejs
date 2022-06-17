@@ -1,0 +1,22 @@
+package authrp
+
+import (
+	"github.com/rayyone/go-core/container"
+	"gorm.io/gorm"
+)
+
+type PermissionRole interface {
+	SkipBaseQuery() PermissionRole
+	GetORM(r corecontainer.RequestInf) *gorm.DB
+	Create(r corecontainer.RequestInf, out interface{}) (*gorm.DB, error)
+	FindBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FirstBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FindByID(r corecontainer.RequestInf, out interface{}, id interface{}) (*gorm.DB, error)
+	Update(r corecontainer.RequestInf, model interface{}, field interface{}) (*gorm.DB, error)
+	UpdateWhere(r corecontainer.RequestInf, model interface{}, fields interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Save(r corecontainer.RequestInf, model interface{}) (*gorm.DB, error)
+	DeleteWhere(r corecontainer.RequestInf, model interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	ForceDeleteWhere(r corecontainer.RequestInf, model interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Pluck(r corecontainer.RequestInf, model interface{}, out interface{}, col string, where string, args ...interface{}) (*gorm.DB, error)
+	Load(r corecontainer.RequestInf, model interface{}, out interface{}, rel string) error
+}

@@ -1,0 +1,13 @@
+package request
+
+type NewRole struct {
+	Name          string   `json:"name" form:"name" binding:"required"`
+	PermissionIds []string `json:"permission_ids" form:"permission_ids" binding:""`
+	// {{ry_placeholder:new_props}}
+}
+
+type UpdateRole struct {
+	Name          string   `json:"name" form:"name" binding:""`
+	PermissionIds []string `json:"permission_ids" form:"permission_ids" binding:""`
+	// {{ry_placeholder:new_props}}
+}

@@ -1,0 +1,40 @@
+package migration
+
+import (
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
+)
+
+func CreateUsersTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202102182000_user_create_users_table",
+		Migrate: func(tx *gorm.DB) error {
+			type Users struct {
+				ID             string  `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				Email          string  `gorm:"not null;type:varchar(255);uniqueIndex:idx_user_email"`
+				Name           *string `gorm:"null;type:varchar(255)"`
+				ProfilePicture *string `gorm:"null;type:varchar(500)"`
+				IsVerified     bool    `gorm:"not null;default:false"`
+				Password       string  `gorm:"null;type:varchar(500)"`
+				model.BaseTimestamps
+			}
+
+			if err := tx.AutoMigrate(&Users{}); err != nil {
+				return err
+			}
+			if err := tx.Exec(`CREATE UNIQUE INDEX users_email_uidx
+			    ON users (email)
+			    WHERE deleted_at IS NULL;
+			`).Error; err != nil {
+				return err
+			}
+
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("users")
+		},
+	}
+}

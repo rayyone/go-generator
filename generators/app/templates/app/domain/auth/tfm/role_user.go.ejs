@@ -1,0 +1,13 @@
+package authtfm
+
+import (
+	"<%= appModName %>/app/model"
+)
+
+type BasicRoleUserResp struct {
+	*model.RoleUserTbl
+}
+
+type RoleUserResp struct {
+	*BasicRoleUserResp
+}

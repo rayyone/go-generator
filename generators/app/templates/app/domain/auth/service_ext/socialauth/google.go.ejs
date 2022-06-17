@@ -1,0 +1,94 @@
+package socialauth
+
+import (
+	"context"
+	"github.com/rayyone/go-core/helpers/array"
+	"github.com/rayyone/go-core/ryerr"
+	"net/http"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/shared_scheme"
+	"<%= appModName %>/config"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+	"google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
+)
+
+// GoogleAuth Google Auth
+type GoogleAuth struct {
+	ClientIds []string
+}
+
+// GoogleTokenInfo struct
+type GoogleTokenInfo struct {
+	Iss string `json:"iss"`
+	// userId
+	Sub string `json:"sub"`
+	Azp string `json:"azp"`
+	// clientId
+	Aud string `json:"aud"`
+	Iat int64  `json:"iat"`
+	// expired time
+	Exp int64 `json:"exp"`
+
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	AtHash        string `json:"at_hash"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+	Local         string `json:"locale"`
+	jwt.StandardClaims
+}
+
+func (ga *GoogleAuth) GetUserInfo(token string) (*sharedscheme.AuthUser, error) {
+	oauth2Service, err := oauth2.NewService(context.Background(), option.WithHTTPClient(http.DefaultClient))
+	if err != nil {
+		return nil, ryerr.Newf("Cannot initiate google oauth2 service. Error: %v", err)
+	}
+	tokenInfo, err := oauth2Service.Tokeninfo().IdToken(token).Do()
+	if err != nil {
+		return nil, ryerr.Newf("Cannot get token info from google. Error: %v. ", err)
+	}
+
+	if !array.InArray(tokenInfo.Audience, ga.ClientIds) || !tokenInfo.VerifiedEmail {
+		return nil, ryerr.Newf("Audience is not match / Email is not verified. Audience: %s. Email Verified: %v", tokenInfo.Audience, tokenInfo.VerifiedEmail)
+	}
+	googleTokenInfo, err := getGoogleTokenInfo(token)
+	if err != nil {
+		return nil, err
+	}
+	userInfo := &sharedscheme.AuthUser{
+		UserID:         googleTokenInfo.Sub,
+		Email:          strings.TrimSpace(strings.ToLower(googleTokenInfo.Email)),
+		Name:           &googleTokenInfo.Name,
+		ProfilePicture: &googleTokenInfo.Picture,
+		FamilyName:     googleTokenInfo.FamilyName,
+		GivenName:      googleTokenInfo.GivenName,
+	}
+
+	return userInfo, nil
+}
+
+func getGoogleTokenInfo(token string) (tokenInfo *GoogleTokenInfo, err error) {
+	jwtToken, _, err := new(jwt.Parser).ParseUnverified(token, &GoogleTokenInfo{})
+	if err != nil {
+		return nil, errcode.BadRequest.Newf("Cannot get user info from google. Error: %v", err)
+	}
+
+	if tokenInfo, ok := jwtToken.Claims.(*GoogleTokenInfo); ok {
+		return tokenInfo, nil
+	} else {
+		return nil, errcode.BadRequest.Newf("Cannot get user info from google. Error: claims is not a google token info")
+	}
+}
+
+func NewGoogleAuth(clientID *string) *GoogleAuth {
+	conf := config.All()
+
+	return &GoogleAuth{
+		ClientIds: conf.GoogleAPI.ClientIds,
+	}
+}

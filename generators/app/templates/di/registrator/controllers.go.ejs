@@ -1,0 +1,23 @@
+package registrator
+
+import (
+	"github.com/google/wire"
+	authctl "<%= appModName %>/app/domain/auth/controller"
+	pingctl "<%= appModName %>/app/domain/ping/controller"
+	userctl "<%= appModName %>/app/domain/user/controller"
+	containerctl "<%= appModName %>/app/foundation/controller/container"
+	// {{ry_placeholder:ctl_import}}
+)
+
+var ControllersSet = wire.NewSet(
+	wire.Struct(new(containerctl.Controller), "*"),
+	pingctl.NewPingController,
+	userctl.NewUserCtl,
+	userctl.NewUserSocialCtl,
+	authctl.NewAccessTokenCtl,
+	authctl.NewRoleCtl,
+	authctl.NewPermissionCtl,
+	authctl.NewRoleUserCtl,
+	authctl.NewAuthCtl,
+	// {{ry_placeholder:ctl_new}}
+)

@@ -1,0 +1,55 @@
+package jwt
+
+import (
+	"fmt"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/config"
+
+	"github.com/rayyone/go-core/ryerr"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
+func GenerateTokenWithClaims(claims jwt.Claims, jwtSecret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(jwtSecret))
+}
+
+func GetTokenObj(accessTokenStr string) (*jwt.Token, error) {
+	tokenObj, err := jwt.Parse(accessTokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("JWT Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(config.All().JWT.Secret), nil
+	})
+	if jwtErr, ok := err.(jwt.ValidationError); ok {
+		switch jwtErr.Errors {
+		case jwt.ValidationErrorExpired:
+			return nil, errcode.Validation.New("Token is expired.")
+		case jwt.ValidationErrorMalformed:
+			return nil, errcode.Validation.New("Invalid tokenObj")
+		default:
+			return nil, ryerr.Msg(
+				ryerr.Newf("Cannot parse tokenObj. Error: %v", err),
+				"Cannot parse tokenObj",
+			)
+		}
+	}
+
+	return tokenObj, nil
+}
+
+func GetClaimsFromToken(token *jwt.Token) (jwt.MapClaims, error) {
+	if token == nil {
+		return nil, errcode.Unauthorized.New("Blank JWT token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, errcode.Unauthorized.New("Error on retrieving JWT Claim")
+	}
+
+	return claims, nil
+}

@@ -1,0 +1,21 @@
+package socialauth
+
+import (
+	"<%= appModName %>/app/domain/auth/constant"
+	"<%= appModName %>/app/shared_scheme"
+)
+
+type Service interface {
+	GetUserInfo(token string) (*sharedscheme.AuthUser, error)
+}
+
+func NewService(provider constant.SocialProvider, clientID *string) Service {
+	switch provider {
+	case constant.GoogleProvider:
+		return NewGoogleAuth(clientID)
+	case constant.AppleProvider:
+		return NewAppleAuth(clientID)
+	default:
+		return nil
+	}
+}

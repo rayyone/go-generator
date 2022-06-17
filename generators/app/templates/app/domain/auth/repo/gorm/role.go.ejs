@@ -1,0 +1,89 @@
+package authg
+
+import (
+	corecontainer "github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/helpers/pagination"
+	corerp "github.com/rayyone/go-core/repositories"
+	"github.com/rayyone/go-core/ryerr"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/domain/auth/repo"
+	"<%= appModName %>/app/foundation/container"
+	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/model"
+	"strings"
+)
+
+type RoleGorm struct {
+	*baserp.BaseGormRepository
+}
+
+func (g *RoleGorm) SkipBaseQuery() authrp.Role {
+	newGormRepo := NewRoleGorm()
+	newGormRepo.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return corerp.DefaultBaseQuery(r)
+	}
+	return newGormRepo
+}
+
+func NewRoleGorm() *RoleGorm {
+	br := baserp.NewBaseGormRepository()
+	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return r.GetDBM().GetTx().
+			Preload("Permissions")
+	}
+	gormRoleRepo := &RoleGorm{
+		BaseGormRepository: br,
+	}
+
+	return gormRoleRepo
+}
+
+func WithTotalUsers(db *gorm.DB) *gorm.DB {
+	return db.Select("roles.*, COUNT(DISTINCT(u.id)) as total_users").
+		Joins("LEFT JOIN role_users as ru ON ru.role_id = roles.id").
+		Joins("LEFT JOIN users as u ON u.id = ru.user_id AND u.deleted_at IS NULL").
+		Group("roles.id")
+}
+
+func (g *RoleGorm) FindWithTotalUsers(r *container.Request, role *model.Role, id string) error {
+	err := g.BaseQuery(r).
+		Scopes(WithTotalUsers).
+		Where("roles.id = ?", id).
+		Preload("Permissions").
+		Find(role).Error
+
+	return corerp.GetFindByErrorType(err, g.IsDebugging)
+}
+
+func (g *RoleGorm) All(r *container.Request) ([]*model.Role, *pagination.Paginator, error) {
+	var res []*model.Role
+	var total int64
+	tx := g.BaseQuery(r)
+
+	if r.UrlParams.Str["name"] != "" {
+		queryStr := "%" + r.UrlParams.Str["name"] + "%"
+		tx = tx.Where("roles.name ILIKE ?", queryStr)
+	}
+	// {{ry_placeholder:new_props}}
+
+	tx.Model(&model.Role{}).Count(&total)
+
+	tx = tx.Scopes(WithTotalUsers)
+
+	tx = tx.Order(getOrderBy(r.UrlParams.Str, "created_at desc"))
+	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
+
+	if err != nil {
+		return nil, nil, ryerr.New(err.Error())
+	}
+	paginator := pagination.BuildPaginator(total, r.Pagination.Limit, r.Pagination.Offset)
+	return res, paginator, err
+}
+
+func getOrderBy(urlParams map[string]string, defOrder string) string {
+	if urlParams["order_by"] != "" {
+		orderBy := strings.Split(urlParams["order_by"], ",")
+		return orderBy[0] + " " + orderBy[1]
+	}
+	return defOrder
+}

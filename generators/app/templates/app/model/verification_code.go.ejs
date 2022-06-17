@@ -1,0 +1,31 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/domain/auth/constant"
+	"time"
+)
+
+type VerificationCodeTbl struct {
+	ID        string                    `json:"id" gorm:"primary_key;auto_increment:false"`
+	UserID    string                    `json:"user_id"`
+	Code      string                    `json:"code"`
+	Type      constant.VerificationType `json:"type"`
+	ExpiredAt time.Time                 `json:"expired_at"`
+	// {{ry_placeholder:new_props}}
+	Timestamps
+}
+
+type VerificationCode struct {
+	VerificationCodeTbl
+}
+
+func (model *VerificationCode) GetAccessors() {}
+
+func (modelTbl *VerificationCodeTbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

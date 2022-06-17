@@ -1,0 +1,96 @@
+package seeder
+
+import (
+	"fmt"
+	"log"
+	"reflect"
+
+	"gorm.io/gorm"
+)
+
+// Seed type
+type Seed struct {
+	db *gorm.DB
+}
+
+var (
+	Refresh           = "refresh"
+	Flush             = "flush"
+	availableCommands = []string{
+		Refresh, Flush,
+	}
+)
+
+func (s *Seed) Execute(seedMethodNames ...string) {
+	// Execute all seeders if no method name is given
+	if len(seedMethodNames) == 0 {
+		s.runAll()
+	}
+
+	if len(seedMethodNames) == 1 && isReservedCommand(seedMethodNames[0]) {
+		switch seedMethodNames[0] {
+		case Refresh:
+			s.truncateAllTables()
+			s.runAll()
+		case Flush:
+			s.truncateAllTables()
+		}
+	} else if len(seedMethodNames) > 0 {
+		// Execute only the given method names
+		for _, seedMethodName := range seedMethodNames {
+			s.run(seedMethodName)
+		}
+	}
+}
+
+func (s *Seed) runAll() {
+	log.Println("Running all seeder...")
+	// We are looping over the method on a Seed struct
+	fmt.Println("========= ProductionDataSeed =========")
+	_ = s.ProductionDataSeed()
+	fmt.Println("========= UserSeed =========")
+	s.UserSeed()
+}
+
+func (s *Seed) run(seedMethodName string) {
+	// Get the reflection value of the method
+	m := reflect.ValueOf(s).MethodByName(seedMethodName)
+	// Exit if the method doesn't exist
+	if !m.IsValid() {
+		log.Fatal("No method called ", seedMethodName)
+	}
+	// Execute the method
+	log.Println("Seeding", seedMethodName, "...")
+	m.Call(nil)
+	log.Println("Seed", seedMethodName, "succeed")
+}
+
+func (s *Seed) truncateAllTables() {
+	log.Println("Truncating all tables...")
+	type Table struct {
+		Name string `json:"name"`
+	}
+	var tables []*Table
+	s.db.Raw(`
+		SELECT table_name "name"
+		FROM information_schema.tables
+		WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name != 'migrations';
+	`).Scan(&tables)
+
+	for _, table := range tables {
+		s.db.Exec("TRUNCATE " + table.Name + " CASCADE;")
+	}
+}
+
+func isReservedCommand(methodName string) bool {
+	for _, commandName := range availableCommands {
+		if commandName == methodName {
+			return true
+		}
+	}
+	return false
+}
+
+func New(db *gorm.DB) *Seed {
+	return &Seed{db: db}
+}

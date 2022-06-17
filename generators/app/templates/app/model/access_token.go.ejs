@@ -1,0 +1,34 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+	"time"
+)
+
+type AccessTokenTbl struct {
+	ID             string     `json:"id"`
+	UserID         string     `json:"user_id"`
+	AccessToken    *string    `json:"-"`
+	TokenExpiredAt *time.Time `json:"token_expired_at"`
+	Revoke         *bool      `json:"revoke"`
+	// {{ry_placeholder:new_props}}
+	Timestamps
+}
+
+type AccessToken struct {
+	AccessTokenTbl
+}
+
+func (model *AccessToken) TableName() string {
+	return "access_tokens"
+}
+
+func (model *AccessToken) GetAccessors() {}
+
+func (modelTbl *AccessTokenTbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

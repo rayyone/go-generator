@@ -1,0 +1,29 @@
+package pingctl
+
+import (
+	"github.com/gin-gonic/gin"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/helpers/response"
+)
+
+type PingCtl struct {
+	*basectl.BaseController
+}
+
+// Ping
+// @Summary      Ping
+// @Tags         Ping
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}   swagger.ResponseWithData{}
+// @Router       /ping [get]
+func (ctl *PingCtl) Ping(c *gin.Context) {
+	res := map[string]string{"hello": "Hello there, we are Rayyoner!"}
+
+	response.RespondSuccess(c, res, "")
+}
+
+// NewPingController initiates a new connection controller
+func NewPingController() *PingCtl {
+	return &PingCtl{}
+}

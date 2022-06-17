@@ -1,0 +1,66 @@
+package routes
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/rayyone/go-core/helpers/response"
+	coreMiddleware "github.com/rayyone/go-core/middleware"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag"
+	authRoute "<%= appModName %>/app/domain/auth/route"
+	userRoute "<%= appModName %>/app/domain/user/route"
+	"<%= appModName %>/app/errcode"
+	containerctl "<%= appModName %>/app/foundation/controller/container"
+	"<%= appModName %>/app/foundation/middleware"
+	"<%= appModName %>/config"
+	"<%= appModName %>/docs"
+)
+
+func InitRouter(controllers *containerctl.Controller) *gin.Engine {
+	router := gin.Default()
+
+	router.Use(middleware.API())
+	router.Use(middleware.LogFormatter())
+	router.Use(middleware.CORS())
+	router.Use(coreMiddleware.HandleError())
+
+	router.MaxMultipartMemory = 8 << 20 // 8 MiB memory for multipart forms
+
+	setUpSwagger(router)
+
+	router.GET("ping", controllers.Ping.Ping)
+	v1 := router.Group("api/v1")
+	{
+		userRoutes := userRoute.NewUserRoute(v1)
+		userRoutes.Routes(controllers)
+
+		authRoutes := authRoute.NewAuthRoute(v1)
+		authRoutes.Routes(controllers)
+
+		// {{ry_placeholder:new_routes}}
+	}
+
+	router.NoRoute(func(c *gin.Context) {
+		response.RespondError(c, errcode.NotFound.New("Endpoint not found."))
+	})
+
+	return router
+}
+
+func setUpSwagger(router *gin.Engine) {
+	conf := config.All()
+	basicAuth := router.Group("ba", gin.BasicAuth(gin.Accounts{
+		conf.App.BasicAuthUser: conf.App.BasicAuthPass,
+	}))
+	basicAuth.GET("/swagger/*any", func(context *gin.Context) {
+		docs.SwaggerInfo.Host = context.Request.Host
+		ginSwagger.CustomWrapHandler(&ginSwagger.Config{
+			URL:                      "doc.json",
+			DeepLinking:              true,
+			DocExpansion:             "none",
+			DefaultModelsExpandDepth: 0,
+			InstanceName:             swag.Name,
+			Title:                    "<%= appModName %>",
+		}, swaggerFiles.Handler)(context)
+	})
+}

@@ -1,0 +1,29 @@
+package authrp
+
+import (
+	"github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/repositories"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/domain/auth/constant"
+	"<%= appModName %>/app/foundation/container"
+	"<%= appModName %>/app/model"
+)
+
+type VerificationCode interface {
+	SkipBaseQuery() VerificationCode
+	GetORM(r corecontainer.RequestInf) *gorm.DB
+	Preload(column string, conditions ...interface{}) *corerp.CoreGormRepository
+	FindBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FirstBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FindByID(r corecontainer.RequestInf, out interface{}, id interface{}) (*gorm.DB, error)
+	Update(r corecontainer.RequestInf, model interface{}, field interface{}) (*gorm.DB, error)
+	UpdateWhere(r corecontainer.RequestInf, model interface{}, fields interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Save(r corecontainer.RequestInf, model interface{}) (*gorm.DB, error)
+	DeleteWhere(r corecontainer.RequestInf, model interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Pluck(r corecontainer.RequestInf, model interface{}, out interface{}, col string, where string, args ...interface{}) (*gorm.DB, error)
+	Upsert(r *container.Request, userID string, verificationType constant.VerificationType, method string) (*model.VerificationCode, error)
+	FindByUserCode(r *container.Request, verificationType constant.VerificationType, userID string, code string) (*model.VerificationCode, error)
+	FindByUser(r *container.Request, verificationType constant.VerificationType, userID string) (*model.VerificationCode, error)
+	Delete(r *container.Request, id string) error
+	DeleteAllExpired(r *container.Request) error
+}

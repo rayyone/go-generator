@@ -1,0 +1,221 @@
+package usersvc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/helpers/str"
+	"github.com/rayyone/go-core/ryerr"
+	"github.com/rayyone/go-core/storage"
+	"<%= appModName %>/app/domain/user/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+)
+
+type UserSvc struct {
+	*basesvc.BaseService
+	storage *storage.Storage
+}
+
+func NewUserSvc(repo *containerrepo.Repo, s *storage.Storage) *UserSvc {
+	return &UserSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+		storage: s,
+	}
+}
+
+func (s *UserSvc) All(r *container.Request) ([]*model.User, *pagination.Paginator, error) {
+	users, paginator, err := s.Repo.User.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all users")
+	}
+
+	for _, e := range users {
+		e.GetAccessors()
+	}
+
+	return users, paginator, nil
+}
+
+func (s *UserSvc) FindWithRolePermissions(r *container.Request, userID string) (*model.User, error) {
+	var user model.User
+	err := s.Repo.User.FindWithPermissions(r, &user, userID)
+	if err != nil {
+		return nil, ryerr.Msg(err, "Cannot find user")
+	}
+
+	user.GetAccessors()
+	return &user, err
+}
+
+func (s *UserSvc) Find(r *container.Request, userID string) (*model.User, error) {
+	var user model.User
+	_, err := s.Repo.User.FindByID(r, &user, userID)
+	if err != nil {
+		return nil, errcode.NotFound.New("User not found")
+	}
+	user.GetAccessors()
+	return &user, err
+}
+
+func (s *UserSvc) Store(r *container.Request, params *request.NewUserByAdmin) (*model.User, error) {
+	var user model.User
+	var err error
+
+	err = helpers.BindData(&user.UserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
+		return nil, err
+	}
+
+	if params.RoleIDs != nil {
+		for _, roleID := range *params.RoleIDs {
+			if _, err := s.Repo.RoleUser.Create(r.Request, &model.RoleUserTbl{
+				UserID: user.ID,
+				RoleID: roleID,
+			}); err != nil {
+				return nil, ryerr.Msg(err, "Cannot assign roles to user")
+			}
+		}
+	}
+
+	var refreshUser model.User
+	_ = s.Repo.User.FindWithPermissions(r, &refreshUser, user.ID)
+	refreshUser.GetAccessors()
+	return &refreshUser, nil
+}
+
+func (s *UserSvc) UpdateMyDetail(r *container.Request, userID string, params request.UpdateMyDetail) (*model.User, error) {
+	var user model.User
+	if _, err := s.Repo.User.FindByID(r, &user, userID); err != nil {
+		return nil, err
+	}
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	err := helpers.BindData(&user.UserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.User.Save(r.Request, &user.UserTbl); err != nil {
+		return nil, ryerr.Msg(err, "Cannot update user")
+	}
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	var refreshUser model.User
+	err = s.Repo.User.FindWithPermissions(r, &refreshUser, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshUser.GetAccessors()
+
+	return &refreshUser, nil
+}
+
+func (s *UserSvc) UpdateByAdmin(r *container.Request, userID string, params request.UpdateByAdmin) (*model.User, error) {
+	var user model.User
+	var err error
+	if _, err := s.Repo.User.FindByID(r, &user, userID); err != nil {
+		return nil, err
+	}
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+	err = helpers.BindData(&user.UserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.Repo.User.Save(r.Request, &user.UserTbl); err != nil {
+		return nil, ryerr.Msg(err, "Cannot update user")
+	}
+	if params.RoleIDs != nil {
+		if _, err := s.Repo.RoleUser.DeleteWhere(r, &model.RoleUser{}, "user_id = ?", user.ID); err != nil {
+			return nil, err
+		}
+		for _, roleID := range *params.RoleIDs {
+			if _, err := s.Repo.RoleUser.Create(r.Request, &model.RoleUserTbl{
+				ID:     str.UUID(),
+				UserID: user.ID,
+				RoleID: roleID,
+			}); err != nil {
+				return nil, ryerr.Msg(err, "Cannot update role_user")
+			}
+		}
+	}
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	var refreshUser model.User
+	err = s.Repo.User.FindWithPermissions(r, &refreshUser, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	refreshUser.GetAccessors()
+	return &refreshUser, nil
+}
+
+func (s *UserSvc) Delete(r *container.Request, userID string) error {
+	if userID == r.Auth.UserID {
+		return errcode.BadRequest.New("You can not delete yourself")
+	}
+	var deletingUser model.User
+	if _, err := s.Repo.User.SkipBaseQuery().FindByID(r, &deletingUser, userID); err != nil {
+		return err
+	}
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	if _, err := s.Repo.User.DeleteWhere(r.Request, &model.User{}, "id = ?", deletingUser.ID); err != nil {
+		return ryerr.Msg(err, "Cannot delete user")
+	}
+	if err := r.DBM.Commit(); err != nil {
+		return ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	return nil
+}
+
+func (s *UserSvc) Update(r *container.Request, userID string, params request.UpdateUser) (*model.User, error) {
+	var user model.User
+	var err error
+	if _, err := s.Repo.User.SkipBaseQuery().FindByID(r, &user, userID); err != nil {
+		return nil, ryerr.New("Cannot find user")
+	}
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	if user.Name != nil && *user.Name != "" {
+		params.Name = nil
+	}
+	if user.ProfilePicture != nil && *user.ProfilePicture != "" {
+		params.ProfilePicture = nil
+	}
+	err = helpers.BindData(&user.UserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.User.Save(r.Request, &user.UserTbl); err != nil {
+		return nil, ryerr.Msg(err, "Cannot store user")
+	}
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	user.GetAccessors()
+
+	return &user, nil
+}

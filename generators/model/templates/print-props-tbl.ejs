@@ -1,0 +1,4 @@
+<% Object.entries(properties).forEach(([propKey, propVal]) => { -%>
+	<%= propVal.pascalName %>      <%= propVal.goType %>       `json:"<%= propKey %>"`
+<% }) -%>
+	<%= newPropsPlaceholder %>

@@ -1,0 +1,97 @@
+package authsvc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/domain/auth/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+)
+
+type AccessTokenSvc struct {
+	*basesvc.BaseService
+}
+
+func NewAccessTokenSvc(repo *containerrepo.Repo) *AccessTokenSvc {
+	return &AccessTokenSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+	}
+}
+
+func (s *AccessTokenSvc) All(r *container.Request) ([]*model.AccessToken, *pagination.Paginator, error) {
+	AccessTokens, paginator, err := s.Repo.AccessToken.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all entities")
+	}
+
+	for _, e := range AccessTokens {
+		e.GetAccessors()
+	}
+
+	return AccessTokens, paginator, nil
+}
+
+func (s *AccessTokenSvc) Find(r *container.Request, AccessTokenID string) (*model.AccessToken, error) {
+	var AccessToken model.AccessToken
+	_, err := s.Repo.AccessToken.FindByID(r, &AccessToken, AccessTokenID)
+	if err != nil {
+		return nil, errcode.NotFound.New("Entity not found")
+	}
+	AccessToken.GetAccessors()
+	return &AccessToken, err
+}
+
+func (s *AccessTokenSvc) Store(r *container.Request, params *request.NewAccessToken) (*model.AccessToken, error) {
+	var AccessToken model.AccessToken
+	var err error
+
+	err = helpers.BindData(&AccessToken.AccessTokenTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.AccessToken.Save(r, &AccessToken.AccessTokenTbl); err != nil {
+		return nil, err
+	}
+
+	var refreshAccessToken model.AccessToken
+	_, err = s.Repo.AccessToken.FindByID(r, &refreshAccessToken, AccessToken.ID)
+	if err != nil {
+		return nil, err
+	}
+	refreshAccessToken.GetAccessors()
+	return &refreshAccessToken, nil
+}
+
+func (s *AccessTokenSvc) Update(r *container.Request, AccessTokenID string, params *request.UpdateAccessToken) (*model.AccessToken, error) {
+	var err error
+	AccessToken, err := s.Find(r, AccessTokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = helpers.BindData(&AccessToken.AccessTokenTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.AccessToken.Save(r, &AccessToken.AccessTokenTbl); err != nil {
+		return nil, err
+	}
+
+	AccessToken.GetAccessors()
+	return AccessToken, nil
+}
+
+func (s *AccessTokenSvc) Delete(r *container.Request, AccessTokenID string) error {
+	if _, err := s.Repo.AccessToken.DeleteWhere(r, &model.AccessToken{}, "id = ?", AccessTokenID); err != nil {
+		return err
+	}
+	return nil
+}

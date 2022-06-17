@@ -1,0 +1,31 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+)
+
+type RoleUser struct {
+	RoleUserTbl
+}
+
+type RoleUserTbl struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+	RoleID string `json:"role_id"`
+	// {{ry_placeholder:new_props}}
+	Timestamps
+}
+
+func (model *RoleUser) TableName() string {
+	return "role_users"
+}
+
+func (model *RoleUser) GetAccessors() {}
+
+func (modelTbl *RoleUserTbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

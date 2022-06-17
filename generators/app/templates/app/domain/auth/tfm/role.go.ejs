@@ -1,0 +1,28 @@
+package authtfm
+
+import (
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/model"
+)
+
+type BasicRoleResp struct {
+	*model.RoleTbl
+}
+
+type RoleResp struct {
+	*BasicRoleResp
+	PermissionsField []*PermissionResp `json:"permissions"`
+	TotalUsersField  *int64            `json:"total_users"`
+}
+
+func (b *RoleResp) Permissions(value []*model.Permission) {
+	data, err := basetfm.TransformSlice[model.Permission, PermissionResp](value)
+	if err != nil {
+		return
+	}
+	b.PermissionsField = data
+}
+
+func (b *RoleResp) TotalUsers(value *int64) {
+	b.TotalUsersField = value
+}

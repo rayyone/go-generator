@@ -1,0 +1,28 @@
+package userrp
+
+import (
+	"github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/repositories"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/foundation/container"
+	"<%= appModName %>/app/model"
+)
+
+type User interface {
+	SkipBaseQuery() User
+	GetORM(r corecontainer.RequestInf) *gorm.DB
+	Preload(column string, conditions ...interface{}) *corerp.CoreGormRepository
+	Create(r corecontainer.RequestInf, out interface{}) (*gorm.DB, error)
+	FindBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FirstBy(r corecontainer.RequestInf, out interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	FindByID(r corecontainer.RequestInf, out interface{}, id interface{}) (*gorm.DB, error)
+	Update(r corecontainer.RequestInf, model interface{}, field interface{}) (*gorm.DB, error)
+	UpdateWhere(r corecontainer.RequestInf, model interface{}, fields interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Save(r corecontainer.RequestInf, model interface{}) (*gorm.DB, error)
+	DeleteWhere(r corecontainer.RequestInf, model interface{}, where string, args ...interface{}) (*gorm.DB, error)
+	Load(r corecontainer.RequestInf, model interface{}, out interface{}, rel string) error
+	All(r *container.Request) ([]*model.User, *pagination.Paginator, error)
+	FindWithPermissions(r *container.Request, user *model.User, id string) error
+	FindByEmail(r *container.Request, email string) (*model.User, error)
+}

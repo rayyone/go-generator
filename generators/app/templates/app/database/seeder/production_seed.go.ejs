@@ -1,0 +1,11 @@
+package seeder
+
+import (
+	productionseeder "<%= appModName %>/app/database/seeder/production_seeder"
+)
+
+func (s Seed) ProductionDataSeed() error {
+	_ = productionseeder.AddRoleAndPermissionsData(s.db)
+
+	return nil
+}

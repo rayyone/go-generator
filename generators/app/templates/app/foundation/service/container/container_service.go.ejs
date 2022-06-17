@@ -1,0 +1,21 @@
+package containersvc
+
+import (
+	"github.com/rayyone/go-core/mails"
+	"github.com/rayyone/go-core/storage"
+	authsvc "<%= appModName %>/app/domain/auth/service"
+
+	usersvc "<%= appModName %>/app/domain/user/service"
+)
+
+type Service struct {
+	Storage     *storage.Storage
+	Mailer      *mails.Mailer
+	User        *usersvc.UserSvc
+	UserSocial  *usersvc.UserSocialSvc
+	AccessToken *authsvc.AccessTokenSvc
+	Permission  *authsvc.PermissionSvc
+	Auth        *authsvc.AuthSvc
+	Role        *authsvc.RoleSvc
+	RoleUser    *authsvc.RoleUserSvc
+}

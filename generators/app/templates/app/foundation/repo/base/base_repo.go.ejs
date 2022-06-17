@@ -1,0 +1,35 @@
+package baserepo
+
+import (
+	corecontainer "github.com/rayyone/go-core/container"
+	corerepo "github.com/rayyone/go-core/repositories"
+	"gorm.io/gorm"
+	"<%= appModName %>/config"
+	"strings"
+)
+
+type BaseGormRepository struct {
+	*corerepo.CoreGormRepository
+}
+
+func GetOrderBy(urlParams map[string]string, defOrder string) string {
+	if urlParams["order_by"] != "" {
+		orderBy := strings.Split(urlParams["order_by"], ",")
+		return orderBy[0] + " " + orderBy[1]
+	}
+	return defOrder
+}
+
+func NewBaseGormRepository() *BaseGormRepository {
+	conf := config.All()
+
+	coreRepo := corerepo.NewCoreGormRepository()
+	coreRepo.IsDebugging = conf.App.APIDebug
+	coreRepo.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return corerepo.DefaultBaseQuery(r)
+	}
+
+	return &BaseGormRepository{
+		coreRepo,
+	}
+}

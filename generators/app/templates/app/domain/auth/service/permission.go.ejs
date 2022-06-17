@@ -1,0 +1,94 @@
+package authsvc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/domain/auth/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+)
+
+type PermissionSvc struct {
+	*basesvc.BaseService
+}
+
+func NewPermissionSvc(repo *containerrepo.Repo) *PermissionSvc {
+	return &PermissionSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+	}
+}
+
+func (s *PermissionSvc) All(r *container.Request) ([]*model.Permission, *pagination.Paginator, error) {
+	permissions, paginator, err := s.Repo.Permission.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all permissions")
+	}
+
+	for _, e := range permissions {
+		e.GetAccessors()
+	}
+
+	return permissions, paginator, nil
+}
+
+func (s *PermissionSvc) Find(r *container.Request, permissionID string) (*model.Permission, error) {
+	var permission model.Permission
+	_, err := s.Repo.Permission.FindByID(r, &permission, permissionID)
+	if err != nil {
+		return nil, errcode.NotFound.New("Permission not found")
+	}
+	permission.GetAccessors()
+	return &permission, err
+}
+
+func (s *PermissionSvc) Store(r *container.Request, params *request.NewPermission) (*model.Permission, error) {
+	var permission model.Permission
+	var err error
+
+	err = helpers.BindData(&permission.PermissionTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.Permission.Save(r, &permission.PermissionTbl); err != nil {
+		return nil, err
+	}
+
+	var refreshPermission model.Permission
+	_, err = s.Repo.Permission.FindByID(r, &refreshPermission, permission.ID)
+	refreshPermission.GetAccessors()
+	return &refreshPermission, nil
+}
+
+func (s *PermissionSvc) Update(r *container.Request, permissionID string, params *request.UpdatePermission) (*model.Permission, error) {
+	var err error
+	permission, err := s.Find(r, permissionID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = helpers.BindData(&permission.PermissionTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.Permission.Save(r, &permission.PermissionTbl); err != nil {
+		return nil, err
+	}
+
+	permission.GetAccessors()
+	return permission, nil
+}
+
+func (s *PermissionSvc) Delete(r *container.Request, permissionID string) error {
+	if _, err := s.Repo.Permission.DeleteWhere(r, &model.Permission{}, "id = ?", permissionID); err != nil {
+		return err
+	}
+	return nil
+}

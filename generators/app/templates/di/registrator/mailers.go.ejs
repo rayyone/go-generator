@@ -1,0 +1,18 @@
+package registrator
+
+import (
+	"github.com/google/wire"
+	"github.com/rayyone/go-core/mails"
+	"<%= appModName %>/config"
+)
+
+var MailerSet = wire.NewSet(
+	mails.NewMailer,
+	mails.NewDefaultProvider,
+	GetMailProviderConfig,
+)
+
+func GetMailProviderConfig() mails.Configuration {
+	conf := config.All()
+	return conf.Mail
+}

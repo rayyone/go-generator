@@ -1,0 +1,241 @@
+package userctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/user/request"
+	usertfm "<%= appModName %>/app/domain/user/tfm"
+	"<%= appModName %>/app/errcode"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type UserCtl struct {
+	*basectl.BaseController
+}
+
+func NewUserCtl(service *containersvc.Service) *UserCtl {
+	return &UserCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// GetMyDetail
+// @Security Bearer
+// @Summary      Get current logged-in user detail
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /me [get]
+func (ctl *UserCtl) GetMyDetail(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var user *model.User
+	var err error
+
+	user, err = ctl.Service.User.FindWithRolePermissions(ctl.Request, ctl.Request.UserID)
+
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// UpdateMyDetail
+// @Security Bearer
+// @Summary      Update current user's detail
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.UpdateMyDetail  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /me [put]
+func (ctl *UserCtl) UpdateMyDetail(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var requestParams request.UpdateMyDetail
+	if err := ctl.Request.SetPostParams(&requestParams); err != nil {
+		return
+	}
+	user, err := ctl.Service.User.UpdateMyDetail(ctl.Request, ctl.Request.UserID, requestParams)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Your information has been updated successfully")
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all users
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        q	query	string	false	"Search everything"
+// @Param        name	query	string	false	"Search in name | ILIKE"
+// @Param        email	query	string	false	"Search in email | ILIKE"
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]usertfm.UserResp}
+// @Router       /users [get]
+func (ctl *UserCtl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	users, paginator, err := ctl.Service.User.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformSlice[model.User, usertfm.UserResp](users)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get user by ID
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "User ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /users/{id} [get]
+func (ctl *UserCtl) GetByID(c *gin.Context) {
+	userID := c.Param("userID")
+	if userID == "" {
+		response.RespondError(c, errcode.Validation.New("User id is required!"))
+		return
+	}
+	ctl.BasePrepare(c)
+	user, err := ctl.Service.User.Find(ctl.Request, userID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// StoreByAdmin
+// @Security Bearer
+// @Summary      Create a new user by ADMIN
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.NewUserByAdmin  true  "Body params"
+// @Success      201  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /users [post]
+func (ctl *UserCtl) StoreByAdmin(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("users.create_update") {
+		return
+	}
+	var params request.NewUserByAdmin
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	user, err := ctl.Service.User.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "User has been added successfully.")
+}
+
+// UpdateByAdmin
+// @Security Bearer
+// @Summary      Update a user by ADMIN
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.UpdateByAdmin  true  "Body params; Patch update"
+// @Param        id path  string  true  "User ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /users/{id} [put]
+func (ctl *UserCtl) UpdateByAdmin(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("users.create_update") {
+		return
+	}
+	userID := c.Param("userID")
+	if userID == "" {
+		response.RespondError(c, errcode.Validation.New("User id is required!"))
+		return
+	}
+
+	var params request.UpdateByAdmin
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	user, err := ctl.Service.User.UpdateByAdmin(ctl.Request, userID, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "User has been updated successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete a user
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "User ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /users/{id} [delete]
+func (ctl *UserCtl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("users.delete") {
+		return
+	}
+	userID := c.Param("userID")
+	if userID == "" {
+		response.RespondError(c, errcode.Validation.New("User id is required!"))
+		return
+	}
+
+	err := ctl.Service.User.Delete(ctl.Request, userID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "User has been deleted successfully.")
+}

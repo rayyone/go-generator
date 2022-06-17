@@ -1,0 +1,60 @@
+package authroute
+
+import (
+	"github.com/gin-gonic/gin"
+	containerctl "<%= appModName %>/app/foundation/controller/container"
+	"<%= appModName %>/app/foundation/middleware"
+)
+
+type AuthRoute struct {
+	routeGroup *gin.RouterGroup
+}
+
+func (p *AuthRoute) Routes(ctl *containerctl.Controller) {
+	// Public routes
+	plGroup := p.routeGroup.Group("auth")
+	plGroup.POST("login", ctl.Auth.Login)
+	plGroup.POST("register", ctl.Auth.Register)
+	plGroup.POST("social/authenticate", ctl.Auth.SocialAuthenticate)
+	plGroup.POST("account/verify", ctl.Auth.VerifyAccount)
+	plGroup.POST("account/verification/send_email", ctl.Auth.SendAccountVerificationEmail)
+	plGroup.POST("account/reset_password/send_email", ctl.Auth.SendResetPasswordEmail)
+	plGroup.POST("account/reset_password/verify", ctl.Auth.VerifyResetPassword)
+	plGroup.POST("account/reset_password", ctl.Auth.ResetPassword)
+
+	// Private routes
+	pvGroup := p.routeGroup.Group("")
+	middleware.ProtectRoutes(pvGroup, ctl.User.Service)
+
+	pvGroup.GET("roles", ctl.Role.All)
+	pvGroup.POST("roles", ctl.Role.Store)
+	pvGroup.PUT("roles/:roleID", ctl.Role.Update)
+	pvGroup.GET("roles/:roleID", ctl.Role.GetByID)
+	pvGroup.DELETE("roles/:roleID", ctl.Role.Delete)
+
+	pvGroup.GET("permissions", ctl.Permission.All)
+	pvGroup.POST("permissions", ctl.Permission.Store)
+	pvGroup.PUT("permissions/:permissionID", ctl.Permission.Update)
+	pvGroup.GET("permissions/:permissionID", ctl.Permission.GetByID)
+	pvGroup.DELETE("permissions/:permissionID", ctl.Permission.Delete)
+
+	pvGroup.GET("role_users", ctl.RoleUser.All)
+	pvGroup.POST("role_users", ctl.RoleUser.Store)
+	pvGroup.PUT("role_users/:roleUserID", ctl.RoleUser.Update)
+	pvGroup.GET("role_users/:roleUserID", ctl.RoleUser.GetByID)
+	pvGroup.DELETE("role_users/:roleUserID", ctl.RoleUser.Delete)
+
+	pvGroup.GET("access_tokens", ctl.AccessToken.All)
+	pvGroup.POST("access_tokens", ctl.AccessToken.Store)
+	pvGroup.PUT("access_tokens/:accessTokenID", ctl.AccessToken.Update)
+	pvGroup.GET("access_tokens/:accessTokenID", ctl.AccessToken.GetByID)
+	pvGroup.DELETE("access_tokens/:accessTokenID", ctl.AccessToken.Delete)
+
+	// {{ry_placeholder:new_route_resources}}
+}
+
+func NewAuthRoute(rg *gin.RouterGroup) *AuthRoute {
+	return &AuthRoute{
+		routeGroup: rg,
+	}
+}

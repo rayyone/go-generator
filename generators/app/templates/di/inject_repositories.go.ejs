@@ -1,0 +1,19 @@
+//go:build wireinject
+// +build wireinject
+
+package di
+
+import (
+	"github.com/google/wire"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/di/registrator"
+)
+
+func provideRepositories() (*containerrepo.Repo, error) {
+	panic(
+		wire.Build(
+			registrator.ReposSet,
+			wire.Struct(new(containerrepo.Repo), "*"),
+		),
+	)
+}

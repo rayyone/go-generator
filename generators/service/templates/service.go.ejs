@@ -1,0 +1,95 @@
+package <%= domainPkgName %>svc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/domain/<%= domainPkgName %>/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/model"
+)
+
+type <%= className %>Svc struct {
+	*basesvc.BaseService
+}
+
+func New<%= className %>Svc(repo *containerrepo.Repo) *<%= className %>Svc {
+	return &<%= className %>Svc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+	}
+}
+
+func (s *<%= className %>Svc) All(r *container.Request) ([]*model.<%= className %>, *pagination.Paginator, error) {
+	<%= pluralCamelName %>, paginator, err := s.Repo.<%= className %>.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all entities")
+	}
+
+	for _, e := range <%= pluralCamelName %> {
+		e.GetAccessors()
+	}
+
+	return <%= pluralCamelName %>, paginator, nil
+}
+
+func (s *<%= className %>Svc) Find(r *container.Request, <%= camelName %>ID string) (*model.<%= className %>, error) {
+	var <%= camelName %> model.<%= className %>
+	err := s.Repo.<%= className %>.FindByID(r, &<%= camelName %>, <%= camelName %>ID)
+	if err != nil {
+		return nil, errcode.NotFound.New("Entity not found")
+	}
+	<%= camelName %>.GetAccessors()
+	return &<%= camelName %>, err
+}
+
+func (s *<%= className %>Svc) Store(r *container.Request, params *request.New<%= className %>) (*model.<%= className %>, error) {
+	var <%= camelName %> model.<%= className %>
+	var err error
+
+	err = helpers.BindData(&<%= camelName %>.<%= className %>Tbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
+		return nil, err
+	}
+
+	var refresh<%= className %> model.<%= className %>
+	_ = s.Repo.<%= className %>.FindByID(r, &refresh<%= className %>, <%= camelName %>.ID)
+	refresh<%= className %>.GetAccessors()
+
+	return &refresh<%= className %>, nil
+}
+
+func (s *<%= className %>Svc) Update(r *container.Request, <%= camelName %>ID string, params *request.Update<%= className %>) (*model.<%= className %>, error) {
+	var err error
+	<%= camelName %>, err := s.Find(r, <%= camelName %>ID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = helpers.BindData(&<%= camelName %>.<%= className %>Tbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
+		return nil, err
+	}
+
+	<%= camelName %>.GetAccessors()
+
+	return <%= camelName %>, nil
+}
+
+func (s *<%= className %>Svc) Delete(r *container.Request, <%= camelName %>ID string) error {
+	if err := s.Repo.<%= className %>.DeleteWhere(r, &model.<%= className %>{}, "id = ?", <%= camelName %>ID); err != nil {
+		return err
+	}
+	return nil
+}

@@ -1,0 +1,259 @@
+package authctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/auth/constant"
+	"<%= appModName %>/app/domain/auth/request"
+	usertfm "<%= appModName %>/app/domain/user/tfm"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type AuthCtl struct {
+	*basectl.BaseController
+}
+
+func NewAuthCtl(service *containersvc.Service) *AuthCtl {
+	return &AuthCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// Login
+// @Summary      Login
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.Login  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserWithTokenResp}
+// @Router       /auth/login [post]
+func (ctl *AuthCtl) Login(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.Login
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	user, token, err := ctl.Service.Auth.Login(ctl.Request, &params)
+
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res := usertfm.UserWithToken(user, token)
+
+	response.RespondSuccess(c, res, "You've logged in successfully.")
+}
+
+// Register
+// @Summary      Register by email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.Register  true  "Body params"
+// @Param        file formData  file  false  "Profile picture"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /auth/register [post]
+func (ctl *AuthCtl) Register(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.Register
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	params.ProfilePicture, _ = c.FormFile("profile_picture")
+	err := ctl.Request.ValidateFileType(params.ProfilePicture, []string{"image"})
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	if params.VerificationMethod == "" {
+		params.VerificationMethod = constant.VerificationMethodLink
+	}
+
+	user, err := ctl.Service.Auth.Register(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Your account has been registered. Please verify your account first.")
+}
+
+// SocialAuthenticate
+// @Summary      Login or Register by social accounts
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.SocialAuthenticate  true  "Body params"
+// @Param        file formData  file  false  "Profile picture"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserWithTokenResp}
+// @Router       /auth/social/authenticate [post]
+func (ctl *AuthCtl) SocialAuthenticate(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.SocialAuthenticate
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	user, token, err := ctl.Service.Auth.SocialAuthenticate(ctl.Request, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res := usertfm.UserWithToken(user, token)
+	response.RespondSuccess(c, res, "You've logged in successfully.")
+}
+
+// VerifyAccount
+// @Summary      Verify user account
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.AuthVerify  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /auth/account/verify [post]
+func (ctl *AuthCtl) VerifyAccount(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.AuthVerify
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	user, err := ctl.Service.Auth.VerifyAccount(ctl.Request, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	response.RespondSuccess(c, res, "Your account has been verified successfully.")
+}
+
+// SendAccountVerificationEmail
+// @Summary      Send account verification email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.AuthSendAccountVerification  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{}
+// @Router       /auth/account/verification/send_email [post]
+func (ctl *AuthCtl) SendAccountVerificationEmail(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.AuthSendAccountVerification
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	if params.VerificationMethod == "" {
+		params.VerificationMethod = constant.VerificationMethodLink
+	}
+	if err := ctl.Service.Auth.SendAccountVerificationEmail(ctl.Request, &params); err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	response.RespondSuccess(c, nil, "An email has been sent to your email. Please check your email and follow the steps to verify your account.")
+}
+
+// SendResetPasswordEmail
+// @Summary      Send reset password email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.AuthSendResetPassword  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{}
+// @Router       /auth/account/reset_password/send_email [post]
+func (ctl *AuthCtl) SendResetPasswordEmail(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.AuthSendResetPassword
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	if params.VerificationMethod == "" {
+		params.VerificationMethod = constant.VerificationMethodLink
+	}
+	userID, err := ctl.Service.Auth.SendResetPasswordEmail(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res := map[string]string{
+		"user_id": *userID,
+	}
+
+	response.RespondSuccess(c, res, "Reset password email has been sent to your email. Please check your email and follow the steps to reset your password.")
+}
+
+// VerifyResetPassword
+// @Summary      Verify reset password code
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.AuthVerify  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /auth/account/reset_password/verify [post]
+func (ctl *AuthCtl) VerifyResetPassword(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.AuthVerify
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	user, err := ctl.Service.Auth.VerifyResetPassword(ctl.Request, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Verification link is valid.")
+}
+
+// ResetPassword
+// @Summary      Reset password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.AuthResetPassword  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /auth/account/reset_password [post]
+func (ctl *AuthCtl) ResetPassword(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.AuthResetPassword
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	user, err := ctl.Service.Auth.ResetPassword(ctl.Request, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Your password has been changed successfully.")
+}

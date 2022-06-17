@@ -1,0 +1,65 @@
+package usersvc
+
+import (
+	"github.com/rayyone/go-core/ryerr"
+	"github.com/rayyone/go-core/storage"
+	"<%= appModName %>/app/domain/auth/request"
+	"<%= appModName %>/app/domain/auth/service_ext/socialauth"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/model"
+)
+
+type UserSocialSvc struct {
+	*basesvc.BaseService
+	storage *storage.Storage
+}
+
+func NewUserSocialSvc(repo *containerrepo.Repo, s *storage.Storage) *UserSocialSvc {
+	return &UserSocialSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+		storage: s,
+	}
+}
+
+func (s *UserSocialSvc) Connect(r *container.Request, params request.SocialConnect) (*model.User, error) {
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	user := r.User
+	providerAuth := socialauth.NewService(params.Provider, params.ClientID)
+	authUser, err := providerAuth.GetUserInfo(params.Token)
+	if err != nil {
+		return nil, errcode.Validation.New("Cannot get user info from provider")
+	}
+
+	userSocial := &model.UserSocial{}
+	tx, err := s.Repo.UserSocial.FirstBy(r, userSocial, "provider = ? AND social_id = ?", params.Provider, authUser.UserID)
+	if ryerr.IsGormError(err) {
+		return nil, err
+	}
+	if tx.RowsAffected > 0 {
+		return nil, errcode.Validation.New("This social account is already bind to other account")
+	}
+	if tx.RowsAffected == 0 {
+		userSocial.UserID = user.ID
+		userSocial.Provider = params.Provider
+		userSocial.SocialID = authUser.UserID
+		if _, err = s.Repo.UserSocial.Save(r, &userSocial.UserSocialTbl); err != nil {
+			return nil, errcode.InternalServer.New("Cannot connect social account")
+		}
+		user.Socials = append(user.Socials, userSocial)
+	}
+
+	user.GetAccessors()
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	return user, nil
+}

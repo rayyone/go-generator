@@ -1,0 +1,25 @@
+package registrator
+
+import (
+	"github.com/google/wire"
+	"github.com/rayyone/go-core/storage"
+	"github.com/rayyone/go-core/storage/s3"
+	"<%= appModName %>/config"
+)
+
+var StorageSet = wire.NewSet(
+	s3.NewStorage,
+	GetS3Config,
+	storage.NewStorage,
+	wire.Bind(new(storage.Driver), new(*s3.S3)),
+	storageInfBridge,
+)
+
+func GetS3Config() s3.Configuration {
+	conf := config.All()
+	return conf.Storage.S3
+}
+
+func storageInfBridge(driver storage.Driver) *storage.Driver {
+	return &driver
+}

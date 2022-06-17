@@ -1,0 +1,71 @@
+package response
+
+import (
+	"net/http"
+	apperrors "<%= appModName %>/app/errcode"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rayyone/go-core/helpers/pagination"
+	coreResponse "github.com/rayyone/go-core/helpers/response"
+	"github.com/rayyone/go-core/ryerr"
+)
+
+// RespondCreated respond JSON with data
+func RespondCreated(c *gin.Context, data interface{}, message string) {
+	c.JSON(http.StatusCreated, coreResponse.BuildSuccessResponse(message, data))
+}
+
+// RespondSuccess respond JSON with data
+func RespondSuccess(c *gin.Context, data interface{}, message string) {
+	coreResponse.RespondSuccess(c, data, message)
+}
+
+// RespondSuccessWithPaginator respond with paginator
+func RespondSuccessWithPaginator(c *gin.Context, data interface{}, paginator *pagination.Paginator, message string) {
+	coreResponse.RespondSuccessWithPaginator(c, data, paginator, message)
+}
+
+// RespondError respond error
+func RespondError(c *gin.Context, err error) {
+	var defaultMessage, errorCode string
+	var statusCode int
+
+	errType := ryerr.GetType(err)
+	switch errType {
+	case apperrors.AccountNotVerified:
+		defaultMessage = "Your account is not verified. Please check your email to verify"
+		// statusCode = http.StatusUnauthorized
+		// errorCode = "40101"
+	default:
+		coreResponse.RespondError(c, err)
+		return
+	}
+
+	message := err.Error()
+	if message == "" {
+		message = defaultMessage
+	}
+	if errorCode == "" {
+		// Get error code from err type value
+		errorCode = strconv.Itoa(int(errType))
+	}
+	if statusCode == 0 {
+		statusCode = getStatusCode(errorCode)
+	}
+	c.JSON(statusCode, coreResponse.BuildErrorResponse(err, errorCode, message))
+}
+
+func getStatusCode(errorCode string) (statusCode int) {
+	if len(errorCode) == 3 {
+		statusCode, _ = strconv.Atoi(errorCode)
+	} else if len(errorCode) > 3 {
+		errorCodeStr := errorCode[:3]
+		statusCode, _ = strconv.Atoi(errorCodeStr)
+	}
+	if statusCode == 0 {
+		statusCode = 500
+	}
+
+	return statusCode
+}

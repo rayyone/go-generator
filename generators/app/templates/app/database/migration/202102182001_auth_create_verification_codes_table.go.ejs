@@ -1,0 +1,39 @@
+package migration
+
+import (
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
+	"time"
+)
+
+func CreateVerificationCodesTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202102182001_auth_create_verification_codes_table",
+		Migrate: func(tx *gorm.DB) error {
+			type VerificationCode struct {
+				ID        string    `gorm:"type:uuid;primary_key;auto_increment:false"`
+				UserID    string    `gorm:"not null;type:uuid;index"`
+				Code      string    `gorm:"not null;type:varchar(200);unique_index"`
+				Type      string    `gorm:"not null;type:varchar(200);index"`
+				ExpiredAt time.Time `gorm:"null"`
+				model.Timestamps
+			}
+
+			if err := tx.AutoMigrate(&VerificationCode{}); err != nil {
+				return err
+			}
+			if err := tx.Exec(`ALTER TABLE verification_codes
+				ADD CONSTRAINT fk_users_verification_codes FOREIGN KEY (user_id)
+				REFERENCES users (id) ON UPDATE RESTRICT ON DELETE RESTRICT`).Error; err != nil {
+				return err
+			}
+
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("verification_codes")
+		},
+	}
+}

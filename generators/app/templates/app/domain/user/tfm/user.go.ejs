@@ -1,0 +1,64 @@
+package usertfm
+
+import (
+	"<%= appModName %>/app/domain/auth/constant"
+	authtfm "<%= appModName %>/app/domain/auth/tfm"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/model"
+	"<%= appModName %>/app/shared_scheme"
+)
+
+type BasicUserResp struct {
+	ID             string  `json:"id"`
+	Name           *string `json:"name"`
+	Email          string  `json:"email"`
+	ProfilePicture *string `json:"profile_picture"`
+	IsVerified     *bool   `json:"is_verified"`
+}
+
+type UserResp struct {
+	*BasicUserResp
+	RolesField   []*authtfm.RoleResp      `json:"roles"`
+	SocialsField []*SummaryUserSocialResp `json:"socials"`
+}
+
+func (b *UserResp) Roles(value []*model.Role) {
+	data, err := basetfm.TransformSlice[model.Role, authtfm.RoleResp](value)
+	if err != nil {
+		return
+	}
+	b.RolesField = data
+}
+
+func (b *UserResp) Socials(value []*model.UserSocial) {
+	data, err := basetfm.TransformSlice[model.UserSocial, SummaryUserSocialResp](value)
+	if err != nil {
+		return
+	}
+	b.SocialsField = data
+}
+
+type SummaryUserSocialResp struct {
+	ID       string                  `json:"id"`
+	Provider constant.SocialProvider `json:"provider"`
+	SocialID string                  `json:"social_id"`
+}
+
+type UserWithTokenResp struct {
+	User  *UserResp           `json:"user"`
+	Token *sharedscheme.Token `json:"token"`
+}
+
+func UserWithToken(user *model.User, token *sharedscheme.Token) *UserWithTokenResp {
+	if user == nil || user.ID == "" {
+		return nil
+	}
+	userResp, err := basetfm.TransformOne[model.User, UserResp](user)
+	if err != nil {
+		return nil
+	}
+	return &UserWithTokenResp{
+		User:  userResp,
+		Token: token,
+	}
+}

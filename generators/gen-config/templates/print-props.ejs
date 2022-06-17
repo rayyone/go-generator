@@ -1,0 +1,12 @@
+<%= newPropsPlaceholder %>
+<% Object.entries(properties).forEach(([propKey, propVal]) => { -%>
+    {
+      name: '<%= propVal.pascalName %>',
+      propKey: '<%= propKey %>',
+      orgType: '<%= propVal.type %>',
+      goType: '<%= propVal.goType %>',
+      isRequired: <%= propVal.required %>,
+      filterable: <%= propVal.filterable %>,
+      filterType: '<%= propVal.filterType %>',
+    },
+<% }) -%>

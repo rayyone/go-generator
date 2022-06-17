@@ -1,0 +1,28 @@
+package sharedscheme
+
+import "github.com/dgrijalva/jwt-go"
+
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiredAt    int64  `json:"expired_at"`
+}
+
+type TokenPayload struct {
+	UserID string
+	Email  string
+}
+
+type JWTClaims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
+}
+
+type AuthUser struct {
+	Name           *string
+	Email          string
+	UserID         string
+	ProfilePicture *string
+	GivenName      string
+	FamilyName     string
+}

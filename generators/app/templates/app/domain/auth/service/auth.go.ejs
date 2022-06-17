@@ -1,0 +1,450 @@
+package authsvc
+
+import (
+	"github.com/dgrijalva/jwt-go"
+	"github.com/rayyone/go-core/helpers/method"
+	"github.com/rayyone/go-core/helpers/retry"
+	"github.com/rayyone/go-core/helpers/str"
+	"github.com/rayyone/go-core/mails"
+	"github.com/rayyone/go-core/ryerr"
+	"mime/multipart"
+	"<%= appModName %>/app/domain/auth/constant"
+	"<%= appModName %>/app/domain/auth/mail"
+	"<%= appModName %>/app/domain/auth/request"
+	jwtService "<%= appModName %>/app/domain/auth/service_ext/jwt"
+	"<%= appModName %>/app/domain/auth/service_ext/socialauth"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/model"
+	"<%= appModName %>/app/shared_scheme"
+	"<%= appModName %>/config"
+	"strings"
+	"time"
+)
+
+type FileService interface {
+	StoreProfilePicture(picture *multipart.FileHeader) (*string, error)
+}
+
+type AuthSvc struct {
+	*basesvc.BaseService
+	FileSvc FileService
+	Mailer  *mails.Mailer
+}
+
+func NewAuthSvc(repo *containerrepo.Repo, fs FileService, mailer *mails.Mailer) *AuthSvc {
+	return &AuthSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+		FileSvc: fs,
+		Mailer:  mailer,
+	}
+}
+
+func (s *AuthSvc) Login(r *container.Request, params *request.Login) (*model.User, *sharedscheme.Token, error) {
+	email := strings.TrimSpace(strings.ToLower(params.Email))
+
+	user, err := s.Repo.User.FindByEmail(r, email)
+	if err != nil {
+		return nil, nil, errcode.AccountNotFound.New("Account not found. Please register a new account")
+	}
+	user.GetAccessors()
+
+	if err := s.checkCredentials(r, user, params.Password); err != nil {
+		return nil, nil, err
+	}
+	if !*user.IsVerified {
+		err := errcode.AccountNotVerified.New("Account is not verified")
+		err = ryerr.AddErrorContext(err, "user_id", user.ID)
+		return nil, nil, err
+	}
+
+	payload := sharedscheme.TokenPayload{UserID: user.ID, Email: user.Email}
+	token, err := getTokenFromPayload(payload)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
+		return nil, nil, err
+	}
+
+	err = s.saveAccessToken(r, token, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := s.Repo.User.Load(r, &user, &user.Roles, "Roles"); err != nil {
+		return nil, nil, err
+	}
+	return user, token, nil
+}
+
+func (s *AuthSvc) saveAccessToken(r *container.Request, token *sharedscheme.Token, user *model.User) error {
+	tokenExpiredAt := time.Unix(token.ExpiredAt, 0)
+	_, err := s.Repo.AccessToken.Create(r.Request, &model.AccessTokenTbl{
+		UserID:         user.ID,
+		AccessToken:    &token.AccessToken,
+		TokenExpiredAt: &tokenExpiredAt,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AuthSvc) Register(r *container.Request, params *request.Register) (*model.User, error) {
+	email := strings.TrimSpace(strings.ToLower(params.Email))
+
+	_, err := s.Repo.User.FindByEmail(r, email)
+	if err == nil {
+		return nil, errcode.Validation.New("The email address has been registered. If you don't know your password, please try to use the forgot password feature")
+	} else if ryerr.IsGormError(err) {
+		return nil, errcode.InternalServer.New("Cannot retrieve user data. Please try again later.")
+	}
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	var profilePicture *string
+	if params.ProfilePicture != nil {
+		profilePicture, err = s.FileSvc.StoreProfilePicture(params.ProfilePicture)
+		if err != nil {
+			return nil, errcode.Validation.New("Cannot store profile picture")
+		}
+	}
+
+	hashedPassword := str.Hash(params.Password)
+	user := &model.User{}
+	user.Name = params.Name
+	user.Email = email
+	user.ProfilePicture = profilePicture
+	user.Password = &hashedPassword
+	user.IsVerified = method.Ptr(false)
+	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
+		return nil, errcode.InternalServer.New("Cannot register user")
+	}
+	verificationCode, err := s.Repo.VerificationCode.Upsert(r, user.ID, constant.AccountActivationType, params.VerificationMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.assignRoleUser(r, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Repo.User.Load(r, &user, &user.Roles, "Roles"); err != nil {
+		return nil, err
+	}
+
+	user.GetAccessors()
+
+	var accountActivationMail *mail.AccountActivationMail
+	if params.VerificationMethod == constant.VerificationMethodOTP {
+		accountActivationMail = mail.NewAccountActivationMailByOTP(verificationCode.Code, user.ID)
+	} else {
+		accountActivationMail = mail.NewAccountActivationMail(params.Redirect, verificationCode.Code, user.ID)
+	}
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	go func() {
+		_ = retry.WithRetry(func() error {
+			return s.Mailer.To(email).Send(accountActivationMail)
+		}, retry.Options{MaxRetry: 3, DelayBetweenAttempt: 10 * time.Second})
+	}()
+
+	return user, nil
+}
+
+func (s *AuthSvc) assignRoleUser(r *container.Request, user *model.User) error {
+	var roleUserObj model.Role
+	if _, err := s.Repo.Role.FirstBy(r, &roleUserObj, "name = ?", model.UserRole); err != nil {
+		return err
+	}
+
+	if _, err := s.Repo.RoleUser.Create(r, &model.RoleUserTbl{
+		UserID: user.ID,
+		RoleID: roleUserObj.ID,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AuthSvc) SocialAuthenticate(r *container.Request, params request.SocialAuthenticate) (*model.User, *sharedscheme.Token, error) {
+	providerAuth := socialauth.NewService(params.Provider, params.ClientID)
+	authUser, err := providerAuth.GetUserInfo(params.Token)
+	if err != nil {
+		return nil, nil, errcode.Validation.New("Cannot get user info from provider")
+	}
+	if params.ProfilePicture != nil {
+		authUser.ProfilePicture = params.ProfilePicture
+	}
+
+	user, err := s.Repo.User.FindByEmail(r, authUser.Email)
+	if ryerr.IsGormError(err) {
+		return nil, nil, errcode.SocialAuthServer.New("Something went wrong!")
+	}
+
+	user.AssignProviderUserInfoToUser(authUser)
+	user.IsVerified = method.Ptr(true)
+	user.Email = authUser.Email
+	if params.Name != nil {
+		user.Name = params.Name
+	}
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+	isNewUser := user.ID == ""
+	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
+		return nil, nil, errcode.InternalServer.New("Cannot save user")
+	}
+	if isNewUser && user.ID != "" {
+		err = s.assignRoleUser(r, user)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	if err := s.Repo.User.Load(r, &user, &user.Roles, "Roles"); err != nil {
+		return nil, nil, err
+	}
+	user.GetAccessors()
+
+	var userSocial model.UserSocial
+	tx, err := s.Repo.UserSocial.FindBy(r, &userSocial, "user_id = ? AND provider = ?", user.ID, params.Provider)
+	if ryerr.IsGormError(err) {
+		return nil, nil, errcode.SocialAuthServer.New("Something went wrong with user social!")
+	}
+	if tx.RowsAffected == 0 {
+		userSocial.UserID = user.ID
+		userSocial.Provider = params.Provider
+		userSocial.SocialID = authUser.UserID
+		if _, err := s.Repo.UserSocial.Save(r, &userSocial.UserSocialTbl); err != nil {
+			return nil, nil, errcode.InternalServer.New("Cannot register user")
+		}
+	}
+	user.Socials = append(user.Socials, &userSocial)
+
+	payload := sharedscheme.TokenPayload{UserID: user.ID, Email: user.Email}
+	token, err := getTokenFromPayload(payload)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = s.saveAccessToken(r, token, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	return user, token, nil
+}
+
+func (s *AuthSvc) VerifyAccount(r *container.Request, params request.AuthVerify) (*model.User, error) {
+	var user model.User
+	verificationCode, err := s.Repo.VerificationCode.FindByUserCode(r, constant.AccountActivationType, params.UserID, params.Code)
+	if err != nil {
+		return nil, errcode.Validation.New("Wrong verification code")
+	}
+
+	_, err = s.Repo.User.FindByID(r, &user, verificationCode.UserID)
+	if err != nil {
+		return nil, errcode.Validation.New("Cannot find user")
+	}
+	user.GetAccessors()
+
+	if _, err := s.Repo.User.Update(r, user, model.UserTbl{IsVerified: method.Ptr(true)}); err != nil {
+		return nil, errcode.Validation.New("Cannot verify account")
+	}
+
+	if err := s.Repo.VerificationCode.Delete(r, verificationCode.ID); err != nil {
+		return nil, errcode.Validation.New("Cannot delete Verification COde")
+	}
+
+	return &user, nil
+}
+
+func (s *AuthSvc) SendAccountVerificationEmail(r *container.Request, params *request.AuthSendAccountVerification) error {
+	email := strings.TrimSpace(strings.ToLower(params.Email))
+
+	user, err := s.Repo.User.FindByEmail(r, email)
+	if err != nil {
+		return errcode.Validation.New("There is no account associated with this email")
+	}
+
+	if user.IsVerified != nil && *user.IsVerified == true {
+		return errcode.Validation.New("This account is already verified")
+	}
+
+	verificationCode, err := s.Repo.VerificationCode.Upsert(r, user.ID, constant.AccountActivationType, params.VerificationMethod)
+	if err != nil {
+		return err
+	}
+
+	var accountActivationMail *mail.AccountActivationMail
+	if params.VerificationMethod == constant.VerificationMethodOTP {
+		accountActivationMail = mail.NewAccountActivationMailByOTP(verificationCode.Code, user.ID)
+	} else {
+		accountActivationMail = mail.NewAccountActivationMail(params.Redirect, verificationCode.Code, user.ID)
+	}
+
+	go func() {
+		_ = retry.WithRetry(func() error {
+			return s.Mailer.To(email).Send(accountActivationMail)
+		}, retry.Options{MaxRetry: 3, DelayBetweenAttempt: 10 * time.Second})
+	}()
+
+	return nil
+}
+
+func (s *AuthSvc) SendResetPasswordEmail(r *container.Request, params *request.AuthSendResetPassword) (userID *string, err error) {
+	email := strings.TrimSpace(strings.ToLower(params.Email))
+
+	user, err := s.Repo.User.FindByEmail(r, email)
+	if err != nil {
+		return nil, errcode.AccountNotFound.New("There is no account associated with this email")
+	}
+
+	verificationCode, err := s.Repo.VerificationCode.Upsert(r, user.ID, constant.ResetPasswordType, params.VerificationMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	var resetPasswordVerificationMail *mail.ResetPasswordVerificationMail
+	if params.VerificationMethod == constant.VerificationMethodOTP {
+		resetPasswordVerificationMail = mail.NewResetPasswordVerificationMailByOTP(verificationCode.Code, user.ID)
+	} else {
+		resetPasswordVerificationMail = mail.NewResetPasswordVerificationMail(params.Redirect, verificationCode.Code, user.ID)
+	}
+
+	go func() {
+		_ = retry.WithRetry(func() error {
+			return s.Mailer.To(email).Send(resetPasswordVerificationMail)
+		}, retry.Options{MaxRetry: 3, DelayBetweenAttempt: 10 * time.Second})
+	}()
+
+	return &user.ID, nil
+}
+
+func (s *AuthSvc) VerifyResetPassword(r *container.Request, params request.AuthVerify) (*model.User, error) {
+	var user model.User
+	verificationCode, err := s.Repo.VerificationCode.FindByUserCode(r, constant.ResetPasswordType, params.UserID, params.Code)
+	if err != nil {
+		return nil, errcode.Validation.New("Wrong verification code")
+	}
+
+	if time.Now().After(verificationCode.ExpiredAt) {
+		return nil, errcode.Validation.New("This verification link is expired")
+	}
+
+	_, err = s.Repo.User.FindByID(r, &user, verificationCode.UserID)
+	if err != nil {
+		return nil, errcode.Validation.New("Cannot find account")
+	}
+	user.GetAccessors()
+
+	return &user, nil
+}
+
+func (s *AuthSvc) ResetPassword(r *container.Request, params request.AuthResetPassword) (*model.User, error) {
+	var user model.User
+	verificationCode, err := s.Repo.VerificationCode.FindByUserCode(r, constant.ResetPasswordType, params.UserID, params.Code)
+	if err != nil {
+		return nil, errcode.Validation.New("Wrong verification code")
+	}
+
+	if time.Now().After(verificationCode.ExpiredAt) {
+		return nil, errcode.Validation.New("This verification link is expired")
+	}
+
+	_, err = s.Repo.User.FindByID(r, &user, verificationCode.UserID)
+	if err != nil {
+		return nil, errcode.Validation.New("Cannot find account")
+	}
+
+	user.Password = method.Ptr(str.Hash(params.Password))
+
+	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
+		return nil, errcode.Validation.New("Cannot update password")
+	}
+	user.GetAccessors()
+
+	if err := s.Repo.VerificationCode.Delete(r, verificationCode.ID); err != nil {
+		return nil, errcode.Validation.New("Cannot Delete Verification COde")
+	}
+
+	return &user, nil
+}
+
+func (s *AuthSvc) checkCredentials(r *container.Request, user *model.User, password string) error {
+	if user.Password == nil || *user.Password == "" {
+		return errcode.Validation.New("Your password is not set on this account. Please use forgot password feature to set your password / login with social media instead")
+	}
+	if !str.CheckHash(*user.Password, password) {
+		return errcode.Validation.New("Wrong password")
+	}
+
+	return nil
+}
+
+func getTokenFromPayload(payload sharedscheme.TokenPayload) (*sharedscheme.Token, error) {
+	accessToken, claims, err := createAccessToken(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharedscheme.Token{
+		AccessToken:  *accessToken,
+		RefreshToken: "cAMrwDsXRwPqVmCQx735IX0jQ9-Lc_zHOgYea21xZm3", // Dummy refresh token
+		ExpiredAt:    claims.ExpiresAt,
+	}, nil
+}
+
+func createAccessToken(payload sharedscheme.TokenPayload) (*string, *sharedscheme.JWTClaims, error) {
+	conf := config.All()
+	claims := sharedscheme.JWTClaims{
+		Email: payload.Email,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(conf.JWT.ExpirationTime)).Unix(),
+			IssuedAt:  time.Now().Unix(),
+			Subject:   payload.UserID,
+		},
+	}
+
+	tokenStr, err := jwtService.GenerateTokenWithClaims(claims, conf.JWT.Secret)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &tokenStr, &claims, nil
+}
+
+func (s *AuthSvc) RetrieveUserByToken(r *container.Request, accessToken string) (*model.User, *model.AccessToken, error) {
+	var user model.User
+	var accessTokenObj model.AccessToken
+	_, err := s.Repo.AccessToken.SkipBaseQuery().FirstBy(r, &accessTokenObj, "access_token = ? AND (revoke = false OR revoke IS NULL)", accessToken)
+	if err != nil {
+		return nil, nil, err
+	}
+	_, err = s.Repo.User.SkipBaseQuery().
+		Preload("Roles.Permissions").
+		FindByID(r, &user, accessTokenObj.UserID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user.GetAccessors()
+
+	return &user, &accessTokenObj, nil
+}

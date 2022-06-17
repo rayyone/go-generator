@@ -1,0 +1,8 @@
+<% modelScheme && modelScheme.props.forEach((prop) => { -%>
+<% if (prop.isRequired) { -%>
+	<%= prop.name %>  <%= prop.goType %> `json:"<%= prop.propKey %>" form:"<%= prop.propKey %>" binding:"required"`
+<% } else { -%>
+	<%= prop.name %>  <%= prop.goType %> `json:"<%= prop.propKey %>" form:"<%= prop.propKey %>" binding:""`
+<% } -%>
+<% }) -%>
+	<%= newPropsPlaceholder %>

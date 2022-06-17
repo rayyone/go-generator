@@ -1,0 +1,19 @@
+package request
+
+import "time"
+
+type NewAccessToken struct {
+	UserID         string     `json:"user_id" form:"user_id" binding:"required"`
+	AccessToken    *string    `json:"access_token" form:"access_token" binding:"required"`
+	TokenExpiredAt *time.Time `json:"token_expired_at" form:"token_expired_at" binding:""`
+	Revoke         *bool      `json:"revoke" form:"revoke" binding:""`
+	// {{ry_placeholder:new_props}}
+}
+
+type UpdateAccessToken struct {
+	UserID         string     `json:"user_id" form:"user_id" binding:"required"`
+	AccessToken    *string    `json:"access_token" form:"access_token" binding:"required"`
+	TokenExpiredAt *time.Time `json:"token_expired_at" form:"token_expired_at" binding:""`
+	Revoke         *bool      `json:"revoke" form:"revoke" binding:""`
+	// {{ry_placeholder:new_props}}
+}

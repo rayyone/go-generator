@@ -1,0 +1,71 @@
+package authg
+
+import (
+	corecontainer "github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/helpers/pagination"
+	corerp "github.com/rayyone/go-core/repositories"
+	"github.com/rayyone/go-core/ryerr"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/domain/auth/repo"
+	"<%= appModName %>/app/foundation/container"
+	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/model"
+)
+
+type PermissionGorm struct {
+	*baserp.BaseGormRepository
+}
+
+func (g *PermissionGorm) SkipBaseQuery() authrp.Permission {
+	newGormRepo := NewPermissionGorm()
+	newGormRepo.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return corerp.DefaultBaseQuery(r)
+	}
+	return newGormRepo
+}
+
+func NewPermissionGorm() *PermissionGorm {
+	br := baserp.NewBaseGormRepository()
+	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return r.GetDBM().GetTx()
+	}
+	permissionGorm := &PermissionGorm{
+		BaseGormRepository: br,
+	}
+
+	return permissionGorm
+}
+
+func (g *PermissionGorm) All(r *container.Request) ([]*model.Permission, *pagination.Paginator, error) {
+	var res []*model.Permission
+	var total int64
+	tx := g.BaseQuery(r)
+
+	if r.UrlParams.Str["q"] != "" {
+		queryStr := "%" + r.UrlParams.Str["q"] + "%"
+		tx = tx.Where("permissions.action ILIKE ? OR permissions.description ILIKE ? OR permissions.module ILIKE ?", queryStr, queryStr, queryStr)
+	}
+	if r.UrlParams.Str["module"] != "" {
+		queryStr := "%" + r.UrlParams.Str["module"] + "%"
+		tx = tx.Where("permissions.module ILIKE ?", queryStr)
+	}
+	if r.UrlParams.Str["action"] != "" {
+		queryStr := "%" + r.UrlParams.Str["action"] + "%"
+		tx = tx.Where("permissions.action ILIKE ?", queryStr)
+	}
+	if r.UrlParams.Str["description"] != "" {
+		queryStr := "%" + r.UrlParams.Str["description"] + "%"
+		tx = tx.Where("permissions.description ILIKE ?", queryStr)
+	}
+	// {{ry_placeholder:new_props}}
+
+	tx.Model(&model.Permission{}).Count(&total)
+
+	tx = tx.Order(baserp.GetOrderBy(r.UrlParams.Str, "permissions.module ASC, permissions.action ASC"))
+	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
+	if err != nil {
+		return nil, nil, ryerr.New(err.Error())
+	}
+	paginator := pagination.BuildPaginator(total, r.Pagination.Limit, r.Pagination.Offset)
+	return res, paginator, err
+}

@@ -1,0 +1,28 @@
+package migration
+
+import (
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
+)
+
+func CreateRolesTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202102191001_auth_create_roles_table",
+		Migrate: func(tx *gorm.DB) error {
+			type Role struct {
+				ID   string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+				Name string `gorm:"not null;column:name;type:varchar(255);uniqueIndex:idx_role_name"`
+				model.Timestamps
+			}
+			if err := tx.AutoMigrate(&Role{}); err != nil {
+				return err
+			}
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("roles")
+		},
+	}
+}

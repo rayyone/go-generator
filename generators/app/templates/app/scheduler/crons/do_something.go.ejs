@@ -1,0 +1,13 @@
+package crons
+
+import (
+	"fmt"
+	"<%= appModName %>/app/foundation/container"
+	containersvc "<%= appModName %>/app/foundation/service/container"
+)
+
+func DoSomething(r *container.Request, sp *containersvc.Service) {
+	fmt.Println("==== Start Processing Something ====")
+
+	fmt.Println("==== End Processing Something ====")
+}

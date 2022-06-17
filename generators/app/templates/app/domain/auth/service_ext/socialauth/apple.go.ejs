@@ -1,0 +1,100 @@
+package socialauth
+
+import (
+	"crypto/x509"
+	"encoding/pem"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/shared_scheme"
+	"<%= appModName %>/config"
+	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+
+	"github.com/pagnihotry/siwago"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
+type AppleAuth struct {
+	ClientID string
+	TeamID   string
+	KeyID    string
+	P8       string
+}
+
+func (s *AppleAuth) GetUserInfo(code string) (*sharedscheme.AuthUser, error) {
+	var d time.Duration
+	var siwagoObj *siwago.SiwaConfig
+	var token *siwago.Token
+	var err error
+
+	d = 30 * 24 * time.Hour
+	siwagoObj = siwago.GetObject(s.KeyID, s.TeamID, s.ClientID, d, "")
+	siwagoObj.SetSecretP8String(s.P8)
+
+	token, err = siwagoObj.ExchangeAuthCode(code, "")
+	if err != nil {
+		if token == nil {
+			return nil, ryerr.Newf("Error with exchanging token, token is nil. Error: %s", err.Error())
+		} else if token.Error != "" {
+			return nil, ryerr.Newf("Error while requesting token error: %v", token.Error)
+		} else if !token.Valid {
+			return nil, ryerr.Newf("Invalid token. Error: %s. Token: %s", err.Error(), token.String())
+		} else {
+			return nil, ryerr.Newf("Unknown error on exchange apple auth code %v", err)
+		}
+	}
+
+	userInfo := &sharedscheme.AuthUser{
+		UserID:         token.DecodedIdToken.Body.Sub,
+		Email:          strings.TrimSpace(strings.ToLower(token.DecodedIdToken.Body.Email)),
+		Name:           nil,
+		ProfilePicture: nil,
+	}
+
+	return userInfo, nil
+}
+
+func GenerateClientSecret(signingKey, teamID, clientID, keyID string) (string, error) {
+	block, _ := pem.Decode([]byte(signingKey))
+	if block == nil {
+		return "", ryerr.New("empty block after decoding")
+	}
+
+	privKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Create the Claims
+	now := time.Now()
+	claims := &jwt.StandardClaims{
+		Issuer:    teamID,
+		IssuedAt:  now.Unix(),
+		ExpiresAt: now.Add(time.Hour*24*180 - time.Second).Unix(), // 180 days
+		Audience:  "https://appleid.apple.com",
+		Subject:   clientID,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token.Header["key"] = keyID
+
+	return token.SignedString(privKey)
+}
+
+func NewAppleAuth(clientID *string) *AppleAuth {
+	conf := config.All()
+	if clientID == nil {
+		clientID = aws.String(conf.AppleAPI.Default)
+	}
+	var authConfig config.AppleAuthConfiguration
+	for _, auth := range conf.AppleAPI.Auths {
+		if auth.ClientID == *clientID {
+			authConfig = auth
+		}
+	}
+	appleAuth := AppleAuth(authConfig)
+
+	return &appleAuth
+}

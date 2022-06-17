@@ -1,0 +1,35 @@
+package registrator
+
+import (
+	"github.com/google/wire"
+	authrp "<%= appModName %>/app/domain/auth/repo"
+	authg "<%= appModName %>/app/domain/auth/repo/gorm"
+	userrp "<%= appModName %>/app/domain/user/repo"
+	userg "<%= appModName %>/app/domain/user/repo/gorm"
+	// {{ry_placeholder:repo_import}}
+)
+
+var ReposSet = wire.NewSet(
+	provideRepo,
+	wire.Bind(new(userrp.User), new(*userg.UserGorm)),
+	wire.Bind(new(userrp.UserSocial), new(*userg.UserSocialGorm)),
+	wire.Bind(new(authrp.AccessToken), new(*authg.AccessTokenGorm)),
+	wire.Bind(new(authrp.VerificationCode), new(*authg.VerificationCodeGorm)),
+	wire.Bind(new(authrp.Role), new(*authg.RoleGorm)),
+	wire.Bind(new(authrp.Permission), new(*authg.PermissionGorm)),
+	wire.Bind(new(authrp.PermissionRole), new(*authg.PermissionRoleGorm)),
+	wire.Bind(new(authrp.RoleUser), new(*authg.RoleUserGorm)),
+	// {{ry_placeholder:repo_bind}}
+)
+
+var provideRepo = wire.NewSet(
+	userg.NewUserGorm,
+	userg.NewUserSocialGorm,
+	authg.NewAccessTokenGorm,
+	authg.NewVerificationCodeGorm,
+	authg.NewRoleGorm,
+	authg.NewPermissionGorm,
+	authg.NewPermissionRoleGorm,
+	authg.NewRoleUserGorm,
+	// {{ry_placeholder:repo_new}}
+)

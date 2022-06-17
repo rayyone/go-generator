@@ -1,0 +1,160 @@
+package authsvc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/domain/auth/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/model"
+)
+
+type RoleSvc struct {
+	*basesvc.BaseService
+}
+
+func NewRoleSvc(repo *containerrepo.Repo) *RoleSvc {
+	return &RoleSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+	}
+}
+
+func (s *RoleSvc) All(r *container.Request) ([]*model.Role, *pagination.Paginator, error) {
+	roles, paginator, err := s.Repo.Role.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all role")
+	}
+
+	for _, e := range roles {
+		e.GetAccessors()
+	}
+
+	return roles, paginator, nil
+}
+
+func (s *RoleSvc) Find(r *container.Request, roleID string) (*model.Role, error) {
+	var role model.Role
+	err := s.Repo.Role.FindWithTotalUsers(r, &role, roleID)
+	if err != nil {
+		return nil, err
+	}
+	role.GetAccessors()
+	return &role, err
+}
+
+func (s *RoleSvc) Store(r *container.Request, params *request.NewRole) (*model.Role, error) {
+	var role model.Role
+	_, err := s.Repo.Role.FirstBy(r, &role, "name = ?", params.Name)
+	if ryerr.IsGormError(err) {
+		return nil, err
+	}
+	if err == nil {
+		return nil, errcode.Validation.New("This role name is already exists.")
+	}
+
+	role.Name = params.Name
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	if _, err := s.Repo.Role.Save(r, &role.RoleTbl); err != nil {
+		return nil, err
+	}
+
+	for _, permissionID := range params.PermissionIds {
+		var permission model.Permission
+		_, err := s.Repo.Permission.FindByID(r, &permission, permissionID)
+		if ryerr.IsRecordNotFound(err) {
+			return nil, errcode.NotFound.New("Permission not found")
+		}
+		if err != nil {
+			return nil, err
+		}
+		role.Permissions = append(role.Permissions, &permission)
+
+		var permissionRole model.PermissionRole
+		permissionRole.PermissionID = permissionID
+		permissionRole.RoleID = role.ID
+		if _, err := s.Repo.PermissionRole.Save(r, &permissionRole); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	role.GetAccessors()
+	return &role, nil
+}
+
+func (s *RoleSvc) Update(r *container.Request, roleID string, params *request.UpdateRole) (*model.Role, error) {
+	role, err := s.Find(r, roleID)
+	if err != nil {
+		return nil, err
+	}
+	if params.Name != "" {
+		tx, err := s.Repo.Role.FindBy(r, &model.Role{}, "name = ? AND id != ?", params.Name, role.ID)
+		if ryerr.IsGormError(err) {
+			return nil, err
+		}
+		if tx.RowsAffected > 0 {
+			return nil, errcode.Validation.New("There is a role with this name.")
+		}
+		role.Name = params.Name
+	}
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
+
+	if _, err := s.Repo.Role.Save(r, &role.RoleTbl); err != nil {
+		return nil, err
+	}
+
+	_, err = s.Repo.PermissionRole.ForceDeleteWhere(r, &model.PermissionRole{}, "role_id = ?", role.ID)
+	if err != nil {
+		return nil, err
+	}
+	role.Permissions = []*model.Permission{}
+
+	for _, permissionID := range params.PermissionIds {
+		var permission model.Permission
+		_, err := s.Repo.Permission.FindByID(r, &permission, permissionID)
+		if ryerr.IsRecordNotFound(err) {
+			return nil, errcode.NotFound.New("Permission not found")
+		}
+		if err != nil {
+			return nil, err
+		}
+		role.Permissions = append(role.Permissions, &permission)
+
+		var permissionRole model.PermissionRole
+		permissionRole.PermissionID = permissionID
+		permissionRole.RoleID = role.ID
+		if _, err := s.Repo.PermissionRole.Save(r, &permissionRole.PermissionRoleTbl); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
+	}
+
+	role.GetAccessors()
+	return role, nil
+}
+
+func (s *RoleSvc) Delete(r *container.Request, roleID string) error {
+	if _, err := s.Repo.Role.DeleteWhere(r, &model.Role{}, "id = ?", roleID); err != nil {
+		return err
+	}
+	_, err := s.Repo.PermissionRole.ForceDeleteWhere(r, &model.PermissionRole{}, "role_id = ?", roleID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

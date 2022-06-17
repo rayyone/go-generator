@@ -1,0 +1,41 @@
+//go:build wireinject
+// +build wireinject
+
+package di
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
+	nethttp "net/http"
+	"<%= appModName %>/app/foundation/http"
+	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/app/routes"
+	"<%= appModName %>/di/registrator"
+)
+
+type DiContainer struct {
+	Services   *containersvc.Service
+	HttpServer *http.Server
+}
+
+func InitDiContainer() (*DiContainer, error) {
+	panic(wire.Build(
+		HttpServerSet,
+		wire.Struct(new(DiContainer), "*")))
+}
+
+func httpHandlerInfBridge(handler nethttp.Handler) *nethttp.Handler {
+	return &handler
+}
+
+var RouterSet = wire.NewSet(
+	routes.InitRouter,
+	registrator.ControllersSet,
+	provideServices,
+)
+var HttpServerSet = wire.NewSet(
+	RouterSet,
+	wire.Bind(new(nethttp.Handler), new(*gin.Engine)),
+	httpHandlerInfBridge,
+	http.InitServer,
+)

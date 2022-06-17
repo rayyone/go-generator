@@ -1,0 +1,22 @@
+package errcode
+
+import (
+	"github.com/rayyone/go-core/ryerr"
+)
+
+// Custom Error
+const (
+	NoType                        ryerr.ErrorType = ryerr.NoType
+	InternalServer                ryerr.ErrorType = ryerr.InternalServer
+	BadRequest                    ryerr.ErrorType = ryerr.BadRequest
+	Unauthorized                  ryerr.ErrorType = ryerr.Unauthorized
+	Forbidden                     ryerr.ErrorType = ryerr.Forbidden
+	NotFound                      ryerr.ErrorType = ryerr.NotFound
+	Validation                    ryerr.ErrorType = ryerr.Validation
+	UnprocessableEntity           ryerr.ErrorType = ryerr.UnprocessableEntity
+	TooManyRequests               ryerr.ErrorType = ryerr.TooManyRequests
+	AccountNotFound               ryerr.ErrorType = 40401
+	AccountNotVerified            ryerr.ErrorType = 40101
+	SendVerificationCodeRateLimit ryerr.ErrorType = 42900
+	SocialAuthServer              ryerr.ErrorType = 50001
+)

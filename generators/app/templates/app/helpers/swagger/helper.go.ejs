@@ -1,0 +1,38 @@
+package swagger
+
+// Hacky file. We are copying those needed struct from vendor so that
+// we don't have to use --parseDependency in the `swag init ...` command
+// in order to improve this command's performance
+
+type StandardResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type ResponseWithData struct {
+	StandardResponse
+	Data interface{} `json:"data"`
+}
+
+type PaginatorResponse struct {
+	ResponseWithData
+	Paginator *Paginator `json:"paginator"`
+}
+
+type ErrorResponse struct {
+	StandardResponse
+	ErrorCode string            `json:"error_code"`
+	Errors    []string          `json:"errors"`
+	Fields    map[string]string `json:"fields"`
+}
+
+type Paginator struct {
+	TotalItems   int  `json:"total_items"`
+	TotalPages   int  `json:"total_pages"`
+	ItemFrom     int  `json:"item_from"`
+	ItemTo       int  `json:"item_to"`
+	CurrentPage  int  `json:"current_page"`
+	Limit        int  `json:"limit"`
+	NextPage     *int `json:"next_page"`
+	PreviousPage *int `json:"previous_page"`
+}

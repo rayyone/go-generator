@@ -1,0 +1,57 @@
+package middleware
+
+import (
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	"<%= appModName %>/app/foundation/service/container"
+	"strings"
+	"time"
+
+	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
+	"github.com/rayyone/go-core/helpers/response"
+	"github.com/rayyone/go-core/ryerr"
+)
+
+func UserAuthentication(service *containersvc.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		r := container.InitRequest(c)
+		authHeader := c.Request.Header.Get("Authorization")
+		parts := strings.SplitN(authHeader, " ", 2)
+		if !(len(parts) == 2 && parts[0] == "Bearer") {
+			response.RespondError(c, errcode.Unauthorized.New("Invalid token"))
+			c.Abort()
+			return
+		}
+
+		accessTokenStr := parts[1]
+
+		userObj, accessTokenObj, err := service.Auth.RetrieveUserByToken(r, accessTokenStr)
+		if ryerr.IsRecordNotFound(err) {
+			response.RespondError(c, errcode.Unauthorized.New("Unauthorized!"))
+			c.Abort()
+			return
+		}
+		if ryerr.IsGormError(err) {
+			response.RespondError(c, ryerr.Msg(
+				ryerr.Newf("Error when retrieve user by token. Error: %v", err),
+				"Something went wrong",
+			))
+			c.Abort()
+			return
+		}
+		if accessTokenObj.TokenExpiredAt.Before(time.Now()) {
+			response.RespondError(c, errcode.Unauthorized.New("Expired"))
+		}
+
+		sentry.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetUser(sentry.User{ID: userObj.ID})
+		})
+
+		c.Set("User", userObj)
+		c.Set("UserID", userObj.ID)
+		c.Set("AccessToken", accessTokenStr)
+
+		c.Next()
+	}
+}

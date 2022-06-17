@@ -1,0 +1,66 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/shared_scheme"
+)
+
+type UserTbl struct {
+	ID             string  `json:"id"`
+	Name           *string `json:"name"`
+	Email          string  `json:"email"`
+	ProfilePicture *string `json:"profile_picture"`
+	IsVerified     *bool   `json:"is_verified"`
+	Password       *string `json:"-"`
+	// {{ry_placeholder:new_props}}
+	BaseTimestamps
+}
+
+type User struct {
+	UserTbl
+	Roles       []*Role                    `json:"roles" gorm:"many2many:role_users"`
+	Permissions map[string]map[string]bool `json:"permissions" gorm:"-"`
+	Socials     []*UserSocial              `json:"socials"`
+}
+
+func (model *User) TableName() string {
+	return "users"
+}
+
+func (model *User) GetPermissions() {
+	if model.Permissions == nil {
+		model.Permissions = make(map[string]map[string]bool)
+	}
+	for _, role := range model.Roles {
+		for _, permission := range role.Permissions {
+			if model.Permissions[permission.Module] == nil {
+				model.Permissions[permission.Module] = make(map[string]bool)
+			}
+			model.Permissions[permission.Module][permission.Action] = true
+		}
+	}
+}
+
+func (model *User) AssignProviderUserInfoToUser(authUser *sharedscheme.AuthUser) {
+	if model.Name == nil && authUser.Name != nil {
+		model.Name = authUser.Name
+	}
+	if model.Name == nil {
+		model.Name = &authUser.Email
+	}
+	if authUser.ProfilePicture != nil {
+		model.ProfilePicture = authUser.ProfilePicture
+	}
+}
+
+func (model *User) GetAccessors() {
+	model.GetPermissions()
+}
+
+func (modelTbl *UserTbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

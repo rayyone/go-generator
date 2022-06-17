@@ -1,0 +1,17 @@
+package containerrepo
+
+import (
+	authrp "<%= appModName %>/app/domain/auth/repo"
+	userrp "<%= appModName %>/app/domain/user/repo"
+)
+
+type Repo struct {
+	User             userrp.User
+	AccessToken      authrp.AccessToken
+	VerificationCode authrp.VerificationCode
+	Permission       authrp.Permission
+	PermissionRole   authrp.PermissionRole
+	Role             authrp.Role
+	RoleUser         authrp.RoleUser
+	UserSocial       userrp.UserSocial
+}

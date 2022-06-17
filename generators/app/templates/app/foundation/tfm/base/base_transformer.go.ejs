@@ -1,0 +1,52 @@
+package basetfm
+
+import (
+	"<%= appModName %>/app/helpers"
+	"time"
+)
+
+type Timestamps struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func ParseOne[Model interface{}, Return interface{}](item *Model) (*Return, error) {
+	var out Return
+	if item == nil {
+		return nil, nil
+	}
+	err := helpers.BindData(&out, item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+func TransformOne[Model interface{}, Return interface{}](item *Model) (*Return, error) {
+	if item != nil {
+		out, err := ParseOne[Model, Return](item)
+		if err != nil {
+			return nil, err
+		}
+		return out, nil
+	}
+
+	return nil, nil
+}
+
+func TransformSlice[Model interface{}, ReturnUnit interface{}](data []*Model) ([]*ReturnUnit, error) {
+	if len(data) > 0 {
+		var res []*ReturnUnit
+		for _, item := range data {
+			transformed, err := TransformOne[Model, ReturnUnit](item)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, transformed)
+		}
+		return res, nil
+	}
+
+	return nil, nil
+}

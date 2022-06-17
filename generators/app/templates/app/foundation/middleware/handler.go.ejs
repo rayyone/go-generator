@@ -1,0 +1,19 @@
+package middleware
+
+import (
+	"github.com/gin-gonic/gin"
+	containersvc "<%= appModName %>/app/foundation/service/container"
+)
+
+func GetProtectedMiddlewares() []func(svc *containersvc.Service) gin.HandlerFunc {
+	return []func(svc *containersvc.Service) gin.HandlerFunc{
+		UserAuthentication,
+	}
+}
+
+func ProtectRoutes(routeGroup *gin.RouterGroup, service *containersvc.Service) {
+	pm := GetProtectedMiddlewares()
+	for _, m := range pm {
+		routeGroup.Use(m(service))
+	}
+}

@@ -1,0 +1,39 @@
+package model
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"gorm.io/gorm"
+)
+
+type RoleType string
+
+var (
+	AdminRole RoleType = "Admin"
+	UserRole  RoleType = "User"
+)
+
+type Role struct {
+	RoleTbl     `gorm:"embedded"`
+	Permissions []*Permission `json:"permissions" gorm:"many2many:permission_roles"`
+	TotalUsers  *int64        `json:"total_users"`
+}
+
+type RoleTbl struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// {{ry_placeholder:new_props}}
+	Timestamps
+}
+
+func (model *Role) TableName() string {
+	return "roles"
+}
+
+func (model *Role) GetAccessors() {}
+
+func (modelTbl *RoleTbl) BeforeCreate(scope *gorm.DB) (err error) {
+	if modelTbl.ID == "" {
+		modelTbl.ID = str.UUID()
+	}
+	return
+}

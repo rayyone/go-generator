@@ -1,0 +1,13 @@
+package <%= domainPkgName %>tfm
+
+import (
+	"<%= appModName %>/app/model"
+)
+
+type Basic<%= className %>Resp struct {
+	*model.<%= className %>Tbl
+}
+
+type <%= className %>Resp struct {
+	*Basic<%= className %>Resp
+}

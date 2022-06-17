@@ -1,0 +1,94 @@
+package authsvc
+
+import (
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"<%= appModName %>/app/domain/auth/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+)
+
+type RoleUserSvc struct {
+	*basesvc.BaseService
+}
+
+func NewRoleUserSvc(repo *containerrepo.Repo) *RoleUserSvc {
+	return &RoleUserSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+	}
+}
+
+func (s *RoleUserSvc) All(r *container.Request) ([]*model.RoleUser, *pagination.Paginator, error) {
+	roleUsers, paginator, err := s.Repo.RoleUser.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all role users")
+	}
+
+	for _, e := range roleUsers {
+		e.GetAccessors()
+	}
+
+	return roleUsers, paginator, nil
+}
+
+func (s *RoleUserSvc) Find(r *container.Request, roleUserID string) (*model.RoleUser, error) {
+	var roleUser model.RoleUser
+	_, err := s.Repo.RoleUser.FindByID(r, &roleUser, roleUserID)
+	if err != nil {
+		return nil, errcode.NotFound.New("Role user not found")
+	}
+	roleUser.GetAccessors()
+	return &roleUser, err
+}
+
+func (s *RoleUserSvc) Store(r *container.Request, params *request.NewRoleUser) (*model.RoleUser, error) {
+	var roleUser model.RoleUser
+	var err error
+
+	err = helpers.BindData(&roleUser.RoleUserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.RoleUser.Save(r, &roleUser.RoleUserTbl); err != nil {
+		return nil, err
+	}
+
+	var refreshRoleUser model.RoleUser
+	_, err = s.Repo.RoleUser.FindByID(r, &refreshRoleUser, roleUser.ID)
+	refreshRoleUser.GetAccessors()
+	return &refreshRoleUser, nil
+}
+
+func (s *RoleUserSvc) Update(r *container.Request, roleUserID string, params *request.UpdateRoleUser) (*model.RoleUser, error) {
+	var err error
+	roleUser, err := s.Find(r, roleUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = helpers.BindData(&roleUser.RoleUserTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.RoleUser.Save(r, &roleUser.RoleUserTbl); err != nil {
+		return nil, err
+	}
+
+	roleUser.GetAccessors()
+	return roleUser, nil
+}
+
+func (s *RoleUserSvc) Delete(r *container.Request, roleUserID string) error {
+	if _, err := s.Repo.RoleUser.DeleteWhere(r, &model.RoleUser{}, "id = ?", roleUserID); err != nil {
+		return err
+	}
+	return nil
+}

@@ -1,0 +1,55 @@
+package helpers
+
+import (
+	"github.com/jinzhu/copier"
+	"math/rand"
+	"time"
+)
+
+func BindData(out interface{}, params interface{}) error {
+	// Must set deepcopy to false in order to copy time.Time
+	// @ref: https://github.com/jinzhu/copier/issues/78
+	// Be careful since this won't copy empty data, so 'false' in boolean won't get affected
+	// Consider using a pointer if you want to copy all fields except nil
+	return copier.CopyWithOption(out, params, copier.Option{IgnoreEmpty: true, DeepCopy: false})
+}
+
+func CompareStrPointer(p1 *string, p2 *string) bool {
+	var p1Str, p2Str string
+
+	if p1 != nil {
+		p1Str = *p1
+	}
+
+	if p2 != nil {
+		p2Str = *p2
+	}
+
+	return p1Str == p2Str
+}
+
+func RemoveDuplicatesFromSs(stringSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+
+	if stringSlice == nil {
+		return list
+	}
+
+	// If the key(values of the slice) is not equal
+	// to the already present value in new slice (list)
+	// then we append it. else we jump on another element.
+	for _, entry := range stringSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+// RandomNumber random number between low and high params
+func RandomNumber(low, hi int) int {
+	rand.Seed(time.Now().UnixNano())
+	return low + rand.Intn(hi-low)
+}

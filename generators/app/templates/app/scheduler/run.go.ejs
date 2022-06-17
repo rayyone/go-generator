@@ -1,0 +1,23 @@
+package scheduler
+
+import (
+	"fmt"
+	"github.com/jasonlvhit/gocron"
+	"<%= appModName %>/app/foundation/container"
+	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/config"
+)
+
+func RunCron(serviceProvider *containersvc.Service) {
+	r := container.InitRequest(nil)
+	conf := config.All()
+	fmt.Printf("%+v\n", r)
+	if conf.App.EnableCron {
+		//gocron.Every(1).Hours().
+		//	Do(crons.DoSomething, r, serviceProvider)
+		//gocron.Every(1).Monday().At("18:30").
+		//	Do(crons.DoAnotherThings, r, serviceProvider)
+	}
+
+	<-gocron.Start()
+}

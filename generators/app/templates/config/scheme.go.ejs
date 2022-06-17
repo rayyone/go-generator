@@ -1,0 +1,79 @@
+package config
+
+import (
+	"github.com/rayyone/go-core/database"
+	"github.com/rayyone/go-core/mails"
+	"github.com/rayyone/go-core/storage/s3"
+	"gorm.io/gorm/logger"
+)
+
+type AppConfiguration struct {
+	EnableCron      bool
+	Package         string
+	ENV             string
+	DBDebug         logger.LogLevel
+	APIDebug        bool
+	GinDebugMode    string
+	HTTPClientDebug bool
+	BasicAuthUser   string
+	BasicAuthPass   string
+}
+
+type ServerConfiguration struct {
+	Port int
+}
+
+type FirebaseConfiguration struct {
+	ServiceAccount map[string]string
+}
+
+type GoogleAPIConfiguration struct {
+	ClientIds []string
+}
+
+type AppleAuthConfiguration struct {
+	ClientID string
+	TeamID   string
+	KeyID    string
+	P8       string
+}
+
+type AppleAPIConfiguration struct {
+	Default string
+	Auths   []AppleAuthConfiguration
+}
+
+type ExternalAPIConfiguration struct{}
+
+type OthersConfiguration struct {
+	VerifyAccountDomain string
+}
+
+type StorageConfiguration struct {
+	Default string
+	S3      s3.Configuration
+	Folders map[string]string
+}
+
+type Configuration struct {
+	App         AppConfiguration
+	Server      ServerConfiguration
+	Database    database.Configuration
+	Mail        mails.Configuration
+	GoogleAPI   GoogleAPIConfiguration
+	AppleAPI    AppleAPIConfiguration
+	ExternalAPI ExternalAPIConfiguration
+	JWT         JWTConfiguration
+	Storage     StorageConfiguration
+	Others      OthersConfiguration
+	Sentry      SentryConfiguration
+}
+
+type JWTConfiguration struct {
+	ExpirationTime int
+	Secret         string
+}
+
+type SentryConfiguration struct {
+	DSN *string
+}

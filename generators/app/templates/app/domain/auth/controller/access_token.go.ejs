@@ -1,0 +1,188 @@
+package authctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/auth/request"
+	authtfm "<%= appModName %>/app/domain/auth/tfm"
+	"<%= appModName %>/app/errcode"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type AccessTokenCtl struct {
+	*basectl.BaseController
+}
+
+func NewAccessTokenCtl(service *containersvc.Service) *AccessTokenCtl {
+	return &AccessTokenCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all access_token
+// @Tags         Access token
+// @Accept       json
+// @Produce      json
+// @Param        user_id	query	string	false	"Search by user id | ="
+// @Param        email	query	string	false	"Search by email | ="
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.AccessTokenResp}
+// @Router       /access_tokens [get]
+func (ctl *AccessTokenCtl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("access_tokens.manage_view") {
+		return
+	}
+	accessTokens, paginator, err := ctl.Service.AccessToken.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformSlice[model.AccessToken, authtfm.AccessTokenResp](accessTokens)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get access_token by ID
+// @Tags         Access token
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Access token ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.AccessTokenResp}
+// @Router       /access_tokens/{id} [get]
+func (ctl *AccessTokenCtl) GetByID(c *gin.Context) {
+	accessTokenID := c.Param("accessTokenID")
+	if accessTokenID == "" {
+		response.RespondError(c, errcode.Validation.New("Access token id is required!"))
+		return
+	}
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("access_tokens.manage_view") {
+		return
+	}
+	accessToken, err := ctl.Service.AccessToken.Find(ctl.Request, accessTokenID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.AccessToken, authtfm.AccessTokenResp](accessToken)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// Store
+// @Security Bearer
+// @Summary      Create a new access token
+// @Tags         Access token
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.NewAccessToken  true  "Body params"
+// @Success      201  {object}   swagger.ResponseWithData{data=authtfm.AccessTokenResp}
+// @Router       /access_tokens [post]
+func (ctl *AccessTokenCtl) Store(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("access_tokens.create_update") {
+		return
+	}
+	var params request.NewAccessToken
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	accessToken, err := ctl.Service.AccessToken.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.AccessToken, authtfm.AccessTokenResp](accessToken)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "Access token has been added successfully.")
+}
+
+// Update
+// @Security Bearer
+// @Summary      Update an access token
+// @Tags         Access token
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.UpdateAccessToken  true  "Body params; Patch update"
+// @Param        id path  string  true  "Access token ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.AccessTokenResp}
+// @Router       /access_tokens/{id} [put]
+func (ctl *AccessTokenCtl) Update(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("access_tokens.create_update") {
+		return
+	}
+	accessTokenID := c.Param("accessTokenID")
+	if accessTokenID == "" {
+		response.RespondError(c, errcode.Validation.New("Access token id is required!"))
+		return
+	}
+
+	var params request.UpdateAccessToken
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	accessToken, err := ctl.Service.AccessToken.Update(ctl.Request, accessTokenID, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.AccessToken, authtfm.AccessTokenResp](accessToken)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Access token has been updated successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete an access_token
+// @Tags         Access token
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "Access token ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /access_tokens/{id} [delete]
+func (ctl *AccessTokenCtl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("access_tokens.delete") {
+		return
+	}
+	accessTokenID := c.Param("accessTokenID")
+	if accessTokenID == "" {
+		response.RespondError(c, errcode.Validation.New("Access token id is required!"))
+		return
+	}
+
+	err := ctl.Service.AccessToken.Delete(ctl.Request, accessTokenID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "Access token has been deleted successfully.")
+}

@@ -1,0 +1,18 @@
+package containerctl
+
+import (
+	"<%= appModName %>/app/domain/auth/controller"
+	pingctl "<%= appModName %>/app/domain/ping/controller"
+	userctl "<%= appModName %>/app/domain/user/controller"
+)
+
+type Controller struct {
+	Ping        *pingctl.PingCtl
+	User        *userctl.UserCtl
+	UserSocial  *userctl.UserSocialCtl
+	AccessToken *authctl.AccessTokenCtl
+	Permission  *authctl.PermissionCtl
+	Role        *authctl.RoleCtl
+	RoleUser    *authctl.RoleUserCtl
+	Auth        *authctl.AuthCtl
+}

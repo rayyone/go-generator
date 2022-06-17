@@ -1,0 +1,22 @@
+//go:build wireinject
+// +build wireinject
+
+package di
+
+import (
+	"github.com/google/wire"
+	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/di/registrator"
+)
+
+func provideServices() (*containersvc.Service, error) {
+	panic(
+		wire.Build(
+			provideRepositories,
+			registrator.ServicesSet,
+			registrator.StorageSet,
+			registrator.MailerSet,
+			wire.Struct(new(containersvc.Service), "*"),
+		),
+	)
+}

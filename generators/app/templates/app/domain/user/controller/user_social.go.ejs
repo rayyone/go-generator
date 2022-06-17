@@ -1,0 +1,54 @@
+package userctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/auth/request"
+	usertfm "<%= appModName %>/app/domain/user/tfm"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type UserSocialCtl struct {
+	*basectl.BaseController
+}
+
+func NewUserSocialCtl(service *containersvc.Service) *UserSocialCtl {
+	return &UserSocialCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// Connect
+// @Summary      Connect current logged-in user to their social account
+// @Tags         User,Auth
+// @Accept       json
+// @Produce      json
+// @Param        data formData  request.SocialConnect  true  "Body params"
+// @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
+// @Router       /users/social/connect [post]
+func (ctl *UserSocialCtl) Connect(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	var params request.SocialConnect
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+
+	user, err := ctl.Service.UserSocial.Connect(ctl.Request, params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.User, usertfm.UserResp](user)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Social account has been connected successfully.")
+}

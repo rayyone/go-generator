@@ -1,0 +1,29 @@
+package config
+
+import (
+	"log"
+	"sync"
+
+	"github.com/spf13/viper"
+)
+
+var configuration *Configuration
+var once sync.Once
+
+func All() *Configuration {
+	once.Do(func() {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(".")
+
+		if err := viper.ReadInConfig(); err != nil {
+			log.Fatalf("Error reading config file, %s", err)
+		}
+
+		if err := viper.Unmarshal(&configuration); err != nil {
+			log.Fatalf("Unable to decode into struct, %v", err)
+		}
+	})
+
+	return configuration
+}

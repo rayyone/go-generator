@@ -1,0 +1,62 @@
+package <%= domainPkgName %>g
+
+import (
+	"github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/repositories"
+	"github.com/rayyone/go-core/ryerr"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/domain/<%= domainPkgName %>/repo"
+	"<%= appModName %>/app/foundation/container"
+	"<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/model"
+)
+
+type <%= className %>Gorm struct {
+	*baserepo.BaseGormRepository
+}
+
+func (g *<%= className %>Gorm) SkipBaseQuery() <%= domainPkgName %>rp.<%= className %> {
+	newGormRepo := New<%= className %>Gorm()
+	newGormRepo.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return corerp.DefaultBaseQuery(r)
+	}
+	return newGormRepo
+}
+
+func New<%= className %>Gorm() *<%= className %>Gorm {
+	br := baserepo.NewBaseGormRepository()
+	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return r.GetDBM().GetTx()
+	}
+	gorm<%= className %>Repo := &<%= className %>Gorm{
+		BaseGormRepository: br,
+	}
+
+	return gorm<%= className %>Repo
+}
+
+func getBaseQueryBuilder(r corecontainer.RequestInf) *gorm.DB {
+	return r.GetDBM().GetTx().
+		Set("gorm:auto_preload", false).
+		Set("gorm:association_autocreate", false).
+		Set("gorm:association_autoupdate", false)
+}
+
+func (g *<%= className %>Gorm) All(r *container.Request) ([]*model.<%= className %>, *pagination.Paginator, error) {
+	var res []*model.<%= className %>
+	var total int64
+	tx := g.BaseQuery(r)
+
+<%- include('print-props') %>
+
+	tx.Model(&model.<%= className %>{}).Count(&total)
+
+	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, "<%= tableName %>.created_at DESC"))
+	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
+	if err != nil {
+		return nil, nil, ryerr.New(err.Error())
+	}
+	paginator := pagination.BuildPaginator(total, r.Pagination.Limit, r.Pagination.Offset)
+	return res, paginator, err
+}

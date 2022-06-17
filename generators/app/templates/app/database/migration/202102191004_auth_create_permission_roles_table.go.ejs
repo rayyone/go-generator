@@ -1,0 +1,44 @@
+package migration
+
+import (
+	"<%= appModName %>/app/model"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+)
+
+func CreatePermissionRolesTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202102191004_auth_create_permission_roles_table",
+		Migrate: func(tx *gorm.DB) error {
+			var err error
+			type PermissionRole struct {
+				ID           string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+				PermissionID string `gorm:"not null;column:permission_id;type:uuid;uniqueIndex:idx_permission_role"`
+				RoleID       string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_permission_role"`
+				model.Timestamps
+			}
+			if err = tx.AutoMigrate(&PermissionRole{}); err != nil {
+				return err
+			}
+
+			if err = tx.Exec(`ALTER TABLE permission_roles
+				ADD CONSTRAINT fk_permission_roles_permissions FOREIGN KEY (permission_id)
+				REFERENCES permissions (id) ON UPDATE CASCADE ON DELETE CASCADE`).Error; err != nil {
+				return err
+			}
+
+			if err = tx.Exec(`ALTER TABLE permission_roles
+				ADD CONSTRAINT fk_permission_roles_roles FOREIGN KEY (role_id)
+				REFERENCES roles (id) ON UPDATE CASCADE ON DELETE CASCADE`).Error; err != nil {
+				return err
+			}
+
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("permission_roles")
+		},
+	}
+}

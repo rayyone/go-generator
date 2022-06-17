@@ -1,0 +1,77 @@
+package productionseeder
+
+import (
+	"github.com/rayyone/go-core/helpers/str"
+	"github.com/rayyone/go-core/ryerr"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
+)
+
+func AddRoleAndPermissionsData(db *gorm.DB) error {
+	err := addBasicRoles(db)
+	if err != nil {
+		return err
+	}
+
+	err = addBasicPermissions(db)
+	if err != nil {
+		return err
+	}
+
+	err = assignSuperPowerToAdminRole(db)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func assignSuperPowerToAdminRole(db *gorm.DB) error {
+	var role model.Role
+	if err := db.Where("name = 'Admin'").Find(&role).Error; err != nil {
+		return err
+	}
+
+	var allFeaturePermission model.Permission
+	if err := db.Where("module = 'super_users' AND action = 'all_features'").Find(&allFeaturePermission).Error; err != nil {
+		return err
+	}
+
+	var permissionRole model.PermissionRole
+	permissionRole.PermissionID = allFeaturePermission.ID
+	permissionRole.RoleID = role.ID
+	if err := db.Save(&permissionRole.PermissionRoleTbl).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func addBasicPermissions(db *gorm.DB) error {
+	if err := db.Exec(`
+		INSERT INTO permissions (id, action, description, module)
+		VALUES
+			('` + str.UUID() + `', 'all_features', 'All features', 'super_users'),
+			('` + str.UUID() + `', 'create_update', 'Create / Update', 'users'),
+			('` + str.UUID() + `', 'delete', 'Delete', 'users'),
+			('` + str.UUID() + `', 'manage_view', 'Manage View', 'users')
+		ON CONFLICT (module, action) DO NOTHING
+	`).Error; err != nil {
+		err = ryerr.Newf("Add basic permission: %s", err)
+		return err
+	}
+	return nil
+}
+
+func addBasicRoles(db *gorm.DB) error {
+	if err := db.Exec(`
+		INSERT INTO roles (id, name)
+		VALUES
+			('` + str.UUID() + `', 'Admin'),
+			('` + str.UUID() + `', 'User')
+		ON CONFLICT (name) DO NOTHING
+	`).Error; err != nil {
+		err = ryerr.Newf("Add basic role: %s", err)
+		return err
+	}
+	return nil
+}

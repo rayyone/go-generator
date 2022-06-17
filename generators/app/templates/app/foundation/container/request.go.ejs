@@ -1,0 +1,84 @@
+package container
+
+import (
+	"<%= appModName %>/app/model"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	corecontainer "github.com/rayyone/go-core/container"
+)
+
+type Auth struct {
+	User        *model.User
+	UserID      string
+	AccessToken string
+	IsLoggedIn  bool
+}
+
+type ExtraData struct {
+	// Platform string
+}
+
+type Request struct {
+	*corecontainer.Request
+	Auth
+	ExtraData
+}
+
+func (r *Request) parsePermissions(permissions []string) map[string]string {
+	res := make(map[string]string)
+	for _, v := range permissions {
+		permission := strings.Split(v, ".")
+		res[permission[0]] = permission[1]
+	}
+	return res
+}
+
+func (r *Request) HasPermissions(permissions ...string) bool {
+	permissionAllowed := r.parsePermissions(permissions)
+	userPermissions := r.Auth.User.Permissions
+	if userPermissions["super_users"]["all_features"] {
+		return true
+	}
+	for module, action := range permissionAllowed {
+		if !userPermissions[module][action] {
+			return false
+		}
+	}
+	return true
+}
+
+func InitRequest(c *gin.Context) *Request {
+	coreRequest := corecontainer.InitCoreRequest(c)
+	r := Request{
+		Request: coreRequest,
+	}
+
+	initAuth(c, &r)
+	initExtraData(&r)
+	return &r
+}
+
+func initAuth(c *gin.Context, r *Request) {
+	if c == nil {
+		return
+	}
+
+	r.Auth.IsLoggedIn = false
+	userID := c.GetString("UserID")
+	r.Auth.AccessToken = c.GetString("AccessToken")
+
+	if userID == "" {
+		return
+	}
+	if userObj, ok := c.Get("User"); ok {
+		r.Auth.User = userObj.(*model.User)
+	}
+
+	r.Auth.UserID = userID
+	r.Auth.IsLoggedIn = true
+}
+
+func initExtraData(r *Request) {
+	// r.ExtraData.Platform = platform
+}

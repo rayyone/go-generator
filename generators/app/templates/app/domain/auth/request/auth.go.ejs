@@ -1,0 +1,65 @@
+package request
+
+import (
+	"mime/multipart"
+	"<%= appModName %>/app/domain/auth/constant"
+)
+
+type Login struct {
+	Email    string `json:"email" binding:"required,email" example:"admin@admin.com"`
+	Password string `json:"password" binding:"required,min=6" example:"123123"`
+}
+
+type Register struct {
+	Email              string                `json:"email" form:"email" binding:"required,email"`
+	Password           string                `json:"password" form:"password" binding:"required,min=6"`
+	Name               *string               `json:"name" form:"name"`
+	VerificationMethod string                `json:"verification_method" form:"verification_method" binding:"omitempty,eq=OTP|eq=LINK"`
+	ProfilePicture     *multipart.FileHeader `form:"-" swaggerignore:"true"`
+	Redirect           string                `json:"redirect" form:"redirect"`
+}
+
+type SocialAuthenticate struct {
+	Provider       constant.SocialProvider `json:"provider" binding:"required,eq=Google|eq=Apple" enums:"Google,Apple"`
+	Token          string                  `json:"token" binding:"required"`
+	ClientID       *string                 `json:"client_id" binding:"omitempty"`
+	Name           *string                 `json:"name" binding:"omitempty"`
+	ProfilePicture *string                 `json:"profile_picture"`
+}
+
+type AuthSendAccountVerification struct {
+	Email              string `json:"email" form:"email" binding:"required,email"`
+	PlatformCode       string `json:"platform" form:"platform"`
+	Redirect           string `json:"redirect" form:"redirect"`
+	VerificationMethod string `json:"verification_method" form:"verification_method" binding:"omitempty,eq=OTP|eq=LINK"`
+}
+
+type AuthSendResetPassword struct {
+	Email              string `json:"email" form:"email" binding:"required,email"`
+	PlatformCode       string `json:"platform" form:"platform"`
+	Redirect           string `json:"redirect" form:"redirect"`
+	VerificationMethod string `json:"verification_method" form:"verification_method" binding:"omitempty,eq=OTP|eq=LINK"`
+}
+
+type AuthCheckAccess struct {
+	PlatformCode string  `json:"platform" form:"platform" binding:"required"`
+	Name         *string `json:"name" form:"name"`
+	Email        string  `json:"email" form:"email" binding:"required,email"`
+}
+
+type AuthResetPassword struct {
+	UserID   string `json:"uid" binding:"required"`
+	Code     string `json:"code" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type SocialConnect struct {
+	Provider constant.SocialProvider `form:"provider" json:"provider" binding:"required,eq=Google|eq=Apple"`
+	Token    string                  `form:"token" json:"token" binding:"required"`
+	ClientID *string                 `form:"client_id" json:"client_id" binding:"omitempty"`
+}
+
+type AuthVerify struct {
+	UserID string `json:"uid" binding:"required"`
+	Code   string `json:"code" binding:"required"`
+}

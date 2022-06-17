@@ -1,0 +1,180 @@
+package <%= domainPkgName %>ctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/domain/<%= domainPkgName %>/request"
+	"<%= appModName %>/app/domain/<%= domainPkgName %>/tfm"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type <%= className %>Ctl struct {
+	*basectl.BaseController
+}
+
+func New<%= className %>Ctl(service *containersvc.Service) *<%= className %>Ctl {
+	return &<%= className %>Ctl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all <%= sentenceName %>
+// @Tags         <%= sentenceName %>
+// @Accept       json
+// @Produce      json
+<% modelScheme && modelScheme.props.forEach((prop) => { -%>
+<% if (prop.filterType === '=')  { -%>
+// @Param        <%= prop.propKey %>	query	string	false	"Search <%= prop.name %> | ="
+<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
+// @Param        <%= prop.propKey %>	query	string	false	"Search <%= prop.name %> | <%= prop.filterType %>"
+<% } -%>
+<% }) -%>
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]<%= domainPkgName %>tfm.<%= pascalName %>Resp}
+// @Router       /<%= pluralSnakeName %> [get]
+func (ctl *<%= className %>Ctl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	<%= pluralCamelName %>, paginator, err := ctl.Service.<%= className %>.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformSlice[model.<%= className %>, <%= domainPkgName %>tfm.<%= pascalName %>Resp](<%= pluralCamelName %>)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get <%= sentenceName %> by ID
+// @Tags         <%= sentenceName %>
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "<%= sentenceName %> ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=<%= domainPkgName %>tfm.<%= pascalName %>Resp}
+// @Router       /<%= pluralSnakeName %>/{id} [get]
+func (ctl *<%= className %>Ctl) GetByID(c *gin.Context) {
+	<%= camelName %>ID := c.Param("<%= camelName %>ID")
+	if <%= camelName %>ID == "" {
+		response.RespondError(c, errcode.Validation.New("<%= sentenceName %> id is required!"))
+		return
+	}
+
+	ctl.BasePrepare(c)
+	<%= camelName %>, err := ctl.Service.<%= className %>.Find(ctl.Request, <%= camelName %>ID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.<%= className %>, <%= domainPkgName %>tfm.<%= pascalName %>Resp](<%= camelName %>)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// Store
+// @Security Bearer
+// @Summary      Create a new <%= sentenceName %>
+// @Tags         <%= sentenceName %>
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.New<%= className %>  true  "Body params"
+// @Success      201  {object}   swagger.ResponseWithData{data=<%= domainPkgName %>tfm.<%= pascalName %>Resp}
+// @Router       /<%= pluralSnakeName %> [post]
+func (ctl *<%= className %>Ctl) Store(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.New<%= className %>
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	<%= camelName %>, err := ctl.Service.<%= className %>.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.<%= className %>, <%= domainPkgName %>tfm.<%= pascalName %>Resp](<%= camelName %>)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "<%= sentenceName %> has been added successfully.")
+}
+
+// Update
+// @Security Bearer
+// @Summary      Update a <%= sentenceName %>
+// @Tags         <%= sentenceName %>
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.Update<%= className %>  true  "Body params; Patch update"
+// @Param        id path  string  true  "<%= sentenceName %> ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=<%= domainPkgName %>tfm.<%= pascalName %>Resp}
+// @Router       /<%= pluralSnakeName %>/{id} [put]
+func (ctl *<%= className %>Ctl) Update(c *gin.Context) {
+	ctl.BasePrepare(c)
+	<%= camelName %>ID := c.Param("<%= camelName %>ID")
+	if <%= camelName %>ID == "" {
+		response.RespondError(c, errcode.Validation.New("<%= sentenceName %> id is required!"))
+		return
+	}
+
+	var params request.Update<%= className %>
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	<%= camelName %>, err := ctl.Service.<%= className %>.Update(ctl.Request, <%= camelName %>ID, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.<%= className %>, <%= domainPkgName %>tfm.<%= pascalName %>Resp](<%= camelName %>)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "<%= sentenceName %> has been updated successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete a <%= sentenceName %>
+// @Tags         <%= sentenceName %>
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "<%= sentenceName %> ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /<%= pluralSnakeName %>/{id} [delete]
+func (ctl *<%= className %>Ctl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	<%= camelName %>ID := c.Param("<%= camelName %>ID")
+	if <%= camelName %>ID == "" {
+		response.RespondError(c, errcode.Validation.New("<%= sentenceName %> id is required!"))
+		return
+	}
+
+	err := ctl.Service.<%= className %>.Delete(ctl.Request, <%= camelName %>ID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "<%= sentenceName %> has been deleted successfully.")
+}

@@ -1,0 +1,45 @@
+package migration
+
+import (
+	"<%= appModName %>/app/model"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+)
+
+func CreateRoleUsersTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202102191002_auth_create_role_users_table",
+		Migrate: func(tx *gorm.DB) error {
+			var err error
+			type RoleUser struct {
+				ID     string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+				UserID string `gorm:"not null;column:user_id;type:uuid;uniqueIndex:idx_role_user"`
+				RoleID string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_role_user"`
+				model.Timestamps
+			}
+
+			if err = tx.AutoMigrate(&RoleUser{}); err != nil {
+				return err
+			}
+
+			if err := tx.Exec(`ALTER TABLE role_users
+				ADD CONSTRAINT fk_role_users_users FOREIGN KEY (user_id)
+				REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE`).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Exec(`ALTER TABLE role_users
+				ADD CONSTRAINT fk_role_users_roles FOREIGN KEY (role_id)
+				REFERENCES roles (id) ON UPDATE CASCADE ON DELETE CASCADE`).Error; err != nil {
+				return err
+			}
+
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("role_users")
+		},
+	}
+}

@@ -1,0 +1,109 @@
+package authg
+
+import (
+	corecontainer "github.com/rayyone/go-core/container"
+	"github.com/rayyone/go-core/helpers/str"
+	corerp "github.com/rayyone/go-core/repositories"
+	"github.com/rayyone/go-core/ryerr"
+	"gorm.io/gorm"
+	"log"
+	"<%= appModName %>/app/domain/auth/constant"
+	"<%= appModName %>/app/domain/auth/repo"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+	"strconv"
+	"time"
+)
+
+type VerificationCodeGorm struct {
+	*baserp.BaseGormRepository
+}
+
+func (g *VerificationCodeGorm) SkipBaseQuery() authrp.VerificationCode {
+	newGormRepo := NewVerificationCodeGorm()
+	newGormRepo.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return corerp.DefaultBaseQuery(r)
+	}
+	return newGormRepo
+}
+
+func NewVerificationCodeGorm() *VerificationCodeGorm {
+	br := baserp.NewBaseGormRepository()
+	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
+		return r.GetDBM().GetTx()
+	}
+	gormRepo := &VerificationCodeGorm{
+		BaseGormRepository: br,
+	}
+
+	return gormRepo
+}
+
+func (g *VerificationCodeGorm) FindByUserCode(r *container.Request, verificationType constant.VerificationType, userID string, code string) (*model.VerificationCode, error) {
+	var verificationCode model.VerificationCode
+	_, err := g.FindBy(r, &verificationCode, "type = ? AND code = ? AND user_id = ?", verificationType, code, userID)
+	return &verificationCode, err
+}
+
+func (g *VerificationCodeGorm) FindByUser(r *container.Request, verificationType constant.VerificationType, userID string) (*model.VerificationCode, error) {
+	var verificationCode model.VerificationCode
+	_, err := g.FindBy(r, &verificationCode, "type = ? AND user_id = ?", verificationType, userID)
+	return &verificationCode, err
+}
+
+func (g *VerificationCodeGorm) Upsert(
+	r *container.Request,
+	userID string,
+	verificationType constant.VerificationType,
+	method string,
+) (*model.VerificationCode, error) {
+	code := str.Random(32)
+	if method == constant.VerificationMethodOTP {
+		rand := helpers.RandomNumber(1000, 9999)
+		code = strconv.Itoa(rand)
+	}
+
+	verificationCode, err := g.FindByUser(r, verificationType, userID)
+	if ryerr.IsGormError(err) {
+		return nil, errcode.BadRequest.New("Cannot find existing verification code")
+	}
+	diff := time.Since(verificationCode.UpdatedAt)
+	if diff < 60*time.Second {
+		waitRemaining := (60*time.Second - diff).Seconds()
+		err := errcode.SendVerificationCodeRateLimit.Newf("Please wait for %d seconds before attempting to resend verification code again", int(waitRemaining))
+		err = ryerr.AddErrorContext(err, "wait_remaining", strconv.Itoa(int(waitRemaining)))
+		return nil, err
+	}
+	verificationCode.UserID = userID
+	verificationCode.Type = verificationType
+	verificationCode.Code = code
+	verificationCode.ExpiredAt = time.Now().Add(24 * time.Hour)
+	if _, err := g.Save(r, &verificationCode.VerificationCodeTbl); err != nil {
+		return nil, errcode.BadRequest.New("Cannot save verification code")
+	}
+
+	return verificationCode, nil
+}
+
+func (g *VerificationCodeGorm) DeleteAllExpired(r *container.Request) error {
+	_, err := g.DeleteWhere(r, &model.VerificationCode{}, "expired_at < ?", time.Now())
+	if err != nil {
+		log.Printf("Error: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (g *VerificationCodeGorm) Delete(r *container.Request, id string) error {
+	_, err := g.DeleteWhere(r, &model.VerificationCode{}, "id = ?", id)
+	if err != nil {
+		log.Printf("Error: %s", err.Error())
+		return err
+	}
+
+	return nil
+}

@@ -1,0 +1,183 @@
+package authctl
+
+import (
+	"github.com/gin-gonic/gin"
+	"<%= appModName %>/app/domain/auth/request"
+	authtfm "<%= appModName %>/app/domain/auth/tfm"
+	"<%= appModName %>/app/errcode"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type RoleCtl struct {
+	*basectl.BaseController
+}
+
+func NewRoleCtl(service *containersvc.Service) *RoleCtl {
+	return &RoleCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all roles
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        name	query	string	false	"Search role name | ILIKE"
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.RoleResp}
+// @Router       /roles [get]
+func (ctl *RoleCtl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	roles, paginator, err := ctl.Service.Role.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformSlice[model.Role, authtfm.RoleResp](roles)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get role by ID
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Role ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.RoleResp}
+// @Router       /roles/{id} [get]
+func (ctl *RoleCtl) GetByID(c *gin.Context) {
+	roleID := c.Param("roleID")
+	if roleID == "" {
+		response.RespondError(c, errcode.Validation.New("Role id is required!"))
+		return
+	}
+	ctl.BasePrepare(c)
+	role, err := ctl.Service.Role.Find(ctl.Request, roleID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.Role, authtfm.RoleResp](role)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// Store
+// @Security Bearer
+// @Summary      Create a new role
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.NewRole  true  "Body params"
+// @Success      201  {object}   swagger.ResponseWithData{data=authtfm.RoleResp}
+// @Router       /roles [post]
+func (ctl *RoleCtl) Store(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("roles.create_update") {
+		return
+	}
+	var params request.NewRole
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	role, err := ctl.Service.Role.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.Role, authtfm.RoleResp](role)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "Role has been added successfully.")
+}
+
+// Update
+// @Security Bearer
+// @Summary      Update a role
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        data body  request.UpdateRole  true  "Body params; Patch update"
+// @Param        id path  string  true  "Role ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=authtfm.RoleResp}
+// @Router       /roles/{id} [put]
+func (ctl *RoleCtl) Update(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("roles.create_update") {
+		return
+	}
+	roleID := c.Param("roleID")
+	if roleID == "" {
+		response.RespondError(c, errcode.Validation.New("Role id is required!"))
+		return
+	}
+
+	var params request.UpdateRole
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	role, err := ctl.Service.Role.Update(ctl.Request, roleID, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.Role, authtfm.RoleResp](role)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "Role has been updated successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete a role
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "Role ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /roles/{id} [delete]
+func (ctl *RoleCtl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	if !ctl.HasPermissions("roles.delete") {
+		return
+	}
+	roleID := c.Param("roleID")
+	if roleID == "" {
+		response.RespondError(c, errcode.Validation.New("Role id is required!"))
+		return
+	}
+
+	err := ctl.Service.Role.Delete(ctl.Request, roleID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "Role has been deleted successfully.")
+}
