@@ -61,12 +61,13 @@ exports.newRepoBindPlaceholder = exports.getPlaceholder('repo_bind');
 exports.newRoutePlaceholder = exports.getPlaceholder('new_route_resources');
 exports.newRouteImportPlaceholder = exports.getPlaceholder('new_route_resources_import');
 
-exports.golangTypeChoices = ['string', 'bool', 'int', 'int64', 'time.Time', 'postgres.Jsonb', 'array', 'uuid'];
+exports.golangTypeChoices = ['string', 'uuid', 'bool', 'int', 'int64', 'time.Time', 'postgres.Jsonb', 'array'];
 
 exports.dbFilterChoices = ['=', 'ilike', 'like', 'range'];
 
 exports.getGormType = golangType => {
-  switch (golangType) {
+  const orgType = golangType.replace(/\*/g, '');
+  switch (orgType) {
     case 'string':
       return 'varchar(255)';
     case 'bool':

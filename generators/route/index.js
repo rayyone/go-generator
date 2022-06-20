@@ -110,11 +110,12 @@ module.exports = class GoRouteGenerator extends ArtifactGenerator {
       newRouteImportPlaceholder,
       `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/route"`,
     );
+
     await super._replacePlaceholderToFiles(
       generalRoutePath,
       path.resolve(__dirname, `./templates/add-general-route.ejs`),
       newRoutePlaceholder,
-      `:= ${this.artifactInfo.domainPkgName}Route.New${this.artifactInfo.pascalName}Route`,
+      `${this.artifactInfo.domainPkgName}Route.New${this.artifactInfo.pascalDomainName}Route`,
     );
 
     this.outFiles = [outputPath, generalRoutePath];
@@ -122,7 +123,7 @@ module.exports = class GoRouteGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-    if (!this.classOpts.hintAtTheEnd) {
+    if (this.classOpts.hideHintWhenDone) {
       return;
     }
   }

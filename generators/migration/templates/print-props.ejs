@@ -1,7 +1,7 @@
 <% modelScheme && modelScheme.props.forEach((prop) => { -%>
-<% if (prop.isRequired) { -%>
-				<%= prop.name %>  <%= prop.goType %> `gorm:"not null;type:<%= getGormType(prop.orgType) %>"`
-<% } else { -%>
+<% if (prop.isNullable) { -%>
 				<%= prop.name %>  <%= prop.goType %> `gorm:"null;type:<%= getGormType(prop.orgType) %>"`
+<% } else { -%>
+				<%= prop.name %>  <%= prop.goType %> `gorm:"not null;type:<%= getGormType(prop.orgType) %>"`
 <% } -%>
 <% }) -%>

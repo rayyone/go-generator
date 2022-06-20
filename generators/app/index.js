@@ -10,6 +10,7 @@ const ProjectGenerator = require('../../lib/project-generator');
 const utils = require('../../lib/utils');
 const g = require('../../lib/globalize');
 const path = require('path');
+const chalk = require('chalk');
 
 module.exports = class AppGenerator extends ProjectGenerator {
   // Note: arguments and options should be defined in the constructor.
@@ -107,23 +108,40 @@ module.exports = class AppGenerator extends ProjectGenerator {
     await super.end();
     if (this.shouldExit()) return;
     this.log();
-    this.log(g.f('Application %s was created in %s.', this.projectInfo.name, this.projectInfo.outdir));
+    this.log(chalk.yellow(g.f('Application %s was created in %s.', this.projectInfo.name, this.projectInfo.outdir)));
+    this.log();
+    try {
+      this.log(chalk.yellow(`go mod tidy`));
+      await this.spawnCommand('go', ['mod', 'tidy']);
+      this.log(chalk.yellow(`go mod vendor`));
+      await this.spawnCommand('go', ['mod', 'vendor']);
+      await this.spawnCommand('./bash/swagger.sh', [], {stdio: [process.stdin, 'ignore', process.stderr]});
+      await this.spawnCommand('./bash/wire.sh', [], {stdio: [process.stdin, 'ignore', process.stderr]});
+    } catch (e) {
+      this.log(e);
+      this.log(chalk.red('Something went wrong when trying to setup the project.'));
+      this.log('Please run these commands manually:');
+      this.log(chalk.yellow(`cd ${this.projectInfo.outdir}`));
+      this.log(chalk.yellow(`go mod tidy && go mod vendor`));
+      this.log(chalk.yellow(`./bash/swagger.sh`));
+      this.log(chalk.yellow(`./bash/wire.sh`));
+    }
     this.log();
     this.log(g.f('Next steps:'));
+    this.log(chalk.yellow(`cd ${this.projectInfo.outdir}`));
     this.log();
-    this.log('$ cd ' + this.projectInfo.outdir);
-    this.log(`$ go mod tidy && go mod vendor`);
-    this.log(`$ vim config.yml to update database connection`);
-    this.log(`$ ./bash/swagger.sh`);
-    this.log(`$ ./bash/wire.sh`);
-    this.log(`$ ./bash/redocly.sh`);
-    this.log(`$ air`);
+    this.log(`Update database connection at ./config.yml`);
     this.log();
-    this.log(`$ go run cmd/seeder/main.go`);
-    this.log(`$ Ping: http://localhost:${this.projectInfo.projectPort}/ping`);
-    this.log(`$ Swagger: http://localhost:${this.projectInfo.projectPort}/ba/swagger/index.html`);
-    this.log(`$ Redocly:`);
-    this.log(`$ cd redocly && npm start`);
-    this.log(`$ http://localhost:8080`);
+    this.log(`Enjoy coding:`);
+    this.log(chalk.yellow(`air`));
+    this.log();
+    this.log('=================================================');
+    this.log('Data seeder:');
+    this.log(chalk.yellow(`go run cmd/seeder/main.go`));
+    this.log(chalk.blue(`API health check: http://localhost:${this.projectInfo.projectPort}/ping`));
+    this.log(chalk.blue(`Swagger: http://localhost:${this.projectInfo.projectPort}/ba/swagger/index.html`));
+    this.log(chalk.blue(`Redocly:`));
+    this.log(chalk.yellow(`cd redocly && npm start`));
+    this.log(chalk.blue(`http://localhost:8080`));
   }
 };

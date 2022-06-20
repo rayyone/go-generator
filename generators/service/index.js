@@ -136,15 +136,10 @@ module.exports = class GoServiceGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-    if (!this.classOpts.hintAtTheEnd) {
-      return;
+    if (!this.classOpts.hideHintWhenDone) {
     }
-    this.log();
-    this.log(g.f('Next steps: Wire dependencies'));
-    this.log('$ ./bash/wire.sh');
-    this.log();
-    this.log('Generate swagger doc:');
-    this.log('$ ./bash/swagger.sh');
-    this.log();
+    if (!this.classOpts.notWireDeps) {
+      await super.wireDeps();
+    }
   }
 };

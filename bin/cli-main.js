@@ -12,10 +12,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
 
-const {
-  tabCompletionCommands,
-  runTabCompletionCommand,
-} = require('../lib/tab-completion');
+const {tabCompletionCommands, runTabCompletionCommand} = require('../lib/tab-completion');
 
 // Make sure node version meets the requirement. This code intentionally only
 // uses ES5 features so that it can be run with lower versions of Node
@@ -24,8 +21,7 @@ const nodeVer = process.versions.node;
 const requiredVer = pkg.engines.node;
 const ok = semver.satisfies(nodeVer, requiredVer);
 if (!ok) {
-  const format =
-    'Node.js "%s" is not supported. Please use a version that satisfies "%s".';
+  const format = 'Node.js "%s" is not supported. Please use a version that satisfies "%s".';
   console.warn(chalk.red(format), nodeVer, requiredVer);
 }
 
@@ -56,7 +52,5 @@ updateNotifier({
   pkg: pkg,
   updateCheckInterval: interval,
 }).notify({isGlobal: true});
-
-console.log(opts)
 
 main(opts);

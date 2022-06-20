@@ -156,17 +156,14 @@ module.exports = class GoRepositoryGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-    if (!this.classOpts.hintAtTheEnd) {
-      return;
+
+    if (!this.classOpts.hideHintWhenDone) {
+      this.log(`Add migration files to migration.go to migrate new tables`);
+      this.log(`Rerun the app`);
+      this.log();
     }
-    this.log();
-    this.log(g.f('Next steps: Wire dependencies'));
-    this.log('$ ./bash/wire.sh');
-    this.log();
-    this.log('Generate swagger doc:');
-    this.log('$ ./bash/swagger.sh');
-    this.log();
-    this.log(`Rerun the app to migrate new tables`);
-    this.log();
+    if (!this.classOpts.notWireDeps) {
+      await super.wireDeps();
+    }
   }
 };

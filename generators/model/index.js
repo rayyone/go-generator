@@ -167,6 +167,12 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
           default: true,
         },
         {
+          name: 'nullable',
+          message: g.f('Is it nullable?:'),
+          type: 'confirm',
+          default: true,
+        },
+        {
           name: 'filterable',
           message: g.f('Is it filterable?:'),
           type: 'confirm',
@@ -209,6 +215,7 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
       this.artifactInfo.modelSchemeOutDir,
       this.artifactInfo.modelSchemeOutFile,
     );
+
     this.copyTemplatedFiles(
       path.resolve(__dirname, `../${configDir}/templates/model-scheme.js.ejs`),
       outputModelSchemePath,
@@ -220,7 +227,7 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-    if (!this.classOpts.hintAtTheEnd) {
+    if (this.classOpts.hideHintWhenDone) {
       return;
     }
   }

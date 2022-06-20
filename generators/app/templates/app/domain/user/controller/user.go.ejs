@@ -88,8 +88,8 @@ func (ctl *UserCtl) UpdateMyDetail(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        q	query	string	false	"Search everything"
-// @Param        name	query	string	false	"Search in name | ILIKE"
-// @Param        email	query	string	false	"Search in email | ILIKE"
+// @Param        name	query	string	false	"Search in name. Type: ILIKE"
+// @Param        email	query	string	false	"Search in email. Type: ILIKE"
 // @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
 // @Param        page	query	number	false	"Page"
 // @Param        limit	query	number	false	"Limit"

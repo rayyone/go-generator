@@ -1,24 +1,24 @@
 <% modelScheme && modelScheme.props.forEach((prop) => { -%>
-<% if (prop.filterable && prop.filterType !== 'range') { -%>
-	if r.UrlParams.Str["<%= prop.propKey %>"] != "" {
-<% if (prop.filterType === '=')  { -%>
-		queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
-		tx = tx.Where("<%= tableName %>.<%= prop.propKey %> = ?", queryStr)
-<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
-		queryStr := "%" + r.UrlParams.Str["<%= prop.propKey %>"] + "%"
-		tx = tx.Where("<%= tableName %>.<%= prop.propKey %> <%= prop.filterType %> ?", queryStr)
-<% } -%>
-	}
-<% } -%>
-<% if (prop.filterable && prop.filterType === 'range') { -%>
-	if r.UrlParams.Str["<%= prop.propKey %>_from"] != "" {
-		queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
-		tx = tx.Where("<%= tableName %>.<%= prop.propKey %> >= ?", queryStr)
-	}
-	if r.UrlParams.Str["<%= prop.propKey %>_to"] != "" {
-		queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
-		tx = tx.Where("<%= tableName %>.<%= prop.propKey %> <= ?", queryStr)
-	}
-<% } -%>
+	<% if (prop.filterable && prop.filterType !== 'range') { -%>
+		if r.UrlParams.Str["<%= prop.propKey %>"] != "" {
+		<% if (prop.filterType === '=')  { -%>
+			queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
+			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> = ?", queryStr)
+		<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
+			queryStr := "%" + r.UrlParams.Str["<%= prop.propKey %>"] + "%"
+			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> <%= prop.filterType %> ?", queryStr)
+		<% } -%>
+		}
+	<% } -%>
+	<% if (prop.filterable && prop.filterType === 'range') { -%>
+		if r.UrlParams.Str["<%= prop.propKey %>_from"] != "" {
+			queryStr := r.UrlParams.Str["<%= prop.propKey %>_from"]
+			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> >= ?", queryStr)
+		}
+		if r.UrlParams.Str["<%= prop.propKey %>_to"] != "" {
+			queryStr := r.UrlParams.Str["<%= prop.propKey %>_to"]
+			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> <= ?", queryStr)
+		}
+	<% } -%>
 <% }) -%>
 	<%= newPropsPlaceholder %>

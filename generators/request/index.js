@@ -82,7 +82,7 @@ module.exports = class RequestGenerator extends ArtifactGenerator {
   async end() {
     await super.end();
 
-    if (!this.classOpts.hintAtTheEnd) {
+    if (this.classOpts.hideHintWhenDone) {
       return;
     }
   }

@@ -47,7 +47,7 @@ module.exports = class ResourceGenerator extends ArtifactGenerator {
 
     debug('scaffolding');
     this.composeWith(path.join(__dirname, '../model'), [this.artifactInfo.name, this.artifactInfo.domainName], {
-      hintAtTheEnd: false,
+      hideHintWhenDone: true,
     });
   }
 
@@ -55,50 +55,48 @@ module.exports = class ResourceGenerator extends ArtifactGenerator {
     this.composeWith(path.join(__dirname, '../request'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true},
     ]);
     this.composeWith(path.join(__dirname, '../transformer'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true},
     ]);
     this.composeWith(path.join(__dirname, '../controller'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true, notWireDeps: true},
     ]);
     this.composeWith(path.join(__dirname, '../repository'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true, notWireDeps: true},
     ]);
     this.composeWith(path.join(__dirname, '../service'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true, notWireDeps: true},
     ]);
     this.composeWith(path.join(__dirname, '../migration'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true},
     ]);
     this.composeWith(path.join(__dirname, '../route'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,
-      {hintAtTheEnd: false},
+      {hideHintWhenDone: true},
     ]);
     await super.end();
 
+    await super.wireDeps();
+
     this.log();
-    this.log(g.f(chalk.blue('Next steps: Wire dependencies')));
-    this.log(chalk.blue('$ ./bash/wire.sh'));
+    this.log(g.f(chalk.blueBright('Next steps:')));
     this.log();
-    this.log(chalk.blue(`Add new routes to: app/domain/${this.artifactInfo.domainName}/route`));
+    this.log(chalk.blueBright(`Add new migration files`));
     this.log();
-    this.log(chalk.blue('Generate swagger doc:'));
-    this.log(chalk.blue('$ ./bash/swagger.sh'));
-    this.log();
-    this.log(chalk.blue(`Rerun the app to migrate new tables`));
+    this.log(chalk.blueBright(`Rerun the app to migrate new tables`));
     this.log();
   }
 };

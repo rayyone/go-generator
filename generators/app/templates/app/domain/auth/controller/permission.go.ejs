@@ -31,9 +31,9 @@ func NewPermissionCtl(service *containersvc.Service) *PermissionCtl {
 // @Accept       json
 // @Produce      json
 // @Param        q	query	string	false	"Search everything"
-// @Param        module	query	string	false	"Search module | ILIKE"
-// @Param        action	query	string	false	"Search action | ILIKE"
-// @Param        description	query	string	false	"Search description | ILIKE"
+// @Param        module	query	string	false	"Search module. Type: ILIKE"
+// @Param        action	query	string	false	"Search action. Type: ILIKE"
+// @Param        description	query	string	false	"Search description. Type: ILIKE"
 // @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
 // @Param        page	query	number	false	"Page"
 // @Param        limit	query	number	false	"Limit"

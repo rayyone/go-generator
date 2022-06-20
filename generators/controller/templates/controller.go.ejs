@@ -32,11 +32,15 @@ func New<%= className %>Ctl(service *containersvc.Service) *<%= className %>Ctl 
 // @Accept       json
 // @Produce      json
 <% modelScheme && modelScheme.props.forEach((prop) => { -%>
-<% if (prop.filterType === '=')  { -%>
-// @Param        <%= prop.propKey %>	query	string	false	"Search <%= prop.name %> | ="
-<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
+	<% if (prop.filterType === '=')  { -%>
+// @Param        <%= prop.propKey %>	query	string	false	"Search <%= prop.name %>. Type: ="
+	<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
 // @Param        <%= prop.propKey %>	query	string	false	"Search <%= prop.name %> | <%= prop.filterType %>"
-<% } -%>
+	<% } -%>
+	<% if (prop.filterType === 'range')  { -%>
+// @Param        <%= prop.propKey %>_from	query	string	false	"From <%= prop.name %>. Type: >="
+// @Param        <%= prop.propKey %>_to	query	string	false	"To <%= prop.name %>. Type: <="
+	<% } -%>
 <% }) -%>
 // @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
 // @Param        page	query	number	false	"Page"

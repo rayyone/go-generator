@@ -17,6 +17,7 @@ module.exports = {
   createPropertyTemplateData,
   findBuiltinType,
   BUILTIN_TYPES,
+  GO_BUILTIN_TYPES,
 };
 
 /**
@@ -29,16 +30,19 @@ function createPropertyTemplateData(val, propName) {
   // shallow clone the object - don't modify original data!
   val = {...val};
   const inputType = val.type;
-  const goType = inputType === 'uuid' ? 'string' : inputType;
-  val.goType = val.required ? goType : `*${goType}`;
+  const orgGoType = inputType === 'uuid' ? 'string' : inputType;
+  val.orgType = orgGoType;
+  val.goType = val.required ? orgGoType : `*${orgGoType}`;
   const itemType = val.required ? val.itemType : `*${val.itemType}`;
 
   // Override goType based on certain type values
   if (inputType === 'array') {
     if (GO_BUILTIN_TYPES.includes(val.itemType)) {
       val.goType = `[]${itemType}`;
+      val.orgType = itemType;
     } else {
       val.goType = '[]string';
+      val.orgType = 'string';
     }
   }
   if (NON_GO_TYPES.includes(val.goType)) {
@@ -51,7 +55,6 @@ function createPropertyTemplateData(val, propName) {
 
   // Convert Type to include '' for template
   val.type = `${val.goType}`;
-  val.orgType = `${val.type}`;
 
   if (val.itemType) {
     val.itemType = `${val.itemType}`;

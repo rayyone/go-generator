@@ -97,7 +97,7 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-    if (!this.classOpts.hintAtTheEnd) {
+    if (this.classOpts.hideHintWhenDone) {
       return;
     }
   }

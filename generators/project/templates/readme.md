@@ -3,6 +3,13 @@
 Read this first if you're new to Go Language:
 [https://golang.org/doc/code.html](https://golang.org/doc/code.html)
 
+### Pre install:
+```
+go install github.com/google/wire/cmd/wire@latest
+go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/cosmtrek/air@latest
+```
+
 ### Install
 
 Run `rygo app [appname]`
