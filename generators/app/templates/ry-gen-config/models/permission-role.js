@@ -6,6 +6,7 @@
  */
 
 const permissionRole = {
+  domain: 'auth',
   props: [
     // {{ry_placeholder:new_props}}
     {

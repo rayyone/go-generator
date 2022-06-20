@@ -214,6 +214,8 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
       outputModelSchemePath,
       this.artifactInfo,
     );
+
+    this.outFiles = [outputPath];
   }
 
   async end() {

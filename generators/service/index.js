@@ -12,7 +12,17 @@ const debug = require('../../lib/debug')('service-generator');
 const chalk = require('chalk');
 const path = require('path');
 const helpers = require('../helpers');
-const {diDir, diRegDir, diRegSvcFile, newSvcPlaceholder, newSvcImportPlaceholder} = require('../helpers');
+const {
+  diDir,
+  diRegDir,
+  diRegSvcFile,
+  newSvcPlaceholder,
+  newSvcImportPlaceholder,
+  foundationCtnCtlFile,
+  newCtlImportPlaceholder,
+  newCtlPlaceholder,
+  foundationCtnSvcFile,
+} = require('../helpers');
 const g = require('../../lib/globalize');
 
 const SERVICE_TEMPLATE_PATH = 'service.go.ejs';
@@ -84,12 +94,14 @@ module.exports = class GoServiceGenerator extends ArtifactGenerator {
 
     this.copyTemplatedFiles(this.templatePath(SERVICE_TEMPLATE_PATH), outputPath, this.artifactInfo);
 
+    this.outFiles = [outputPath];
+
     const updateFiles = [
       {
         path: this.destinationPath(diDir, diRegDir, diRegSvcFile),
         tplPath: path.resolve(__dirname, `./templates/import-dep.ejs`),
         placeholder: newSvcImportPlaceholder,
-        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainPkgName}/service"`,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/service"`,
       },
       {
         path: this.destinationPath(diDir, diRegDir, diRegSvcFile),
@@ -97,9 +109,22 @@ module.exports = class GoServiceGenerator extends ArtifactGenerator {
         placeholder: newSvcPlaceholder,
         skip: `${this.artifactInfo.domainPkgName}svc.New${this.artifactInfo.pascalName}Svc`,
       },
+      {
+        path: this.destinationPath(foundationCtnSvcFile),
+        tplPath: path.resolve(__dirname, `./templates/import-dep.ejs`),
+        placeholder: newSvcImportPlaceholder,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/service"`,
+      },
+      {
+        path: this.destinationPath(foundationCtnSvcFile),
+        tplPath: path.resolve(__dirname, `./templates/add-ctn-svc.ejs`),
+        placeholder: newSvcPlaceholder,
+        skip: `${this.artifactInfo.domainPkgName}svc.${this.artifactInfo.pascalName}Svc`,
+      },
     ];
 
     for (const updateFile of updateFiles) {
+      this.outFiles.push(updateFile.path);
       await super._replacePlaceholderToFiles(
         updateFile.path,
         updateFile.tplPath,

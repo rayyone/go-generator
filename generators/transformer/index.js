@@ -90,6 +90,8 @@ module.exports = class GoTransformerGenerator extends ArtifactGenerator {
     const outputPath = this.destinationPath(this.artifactInfo.outDir, this.artifactInfo.outFile);
 
     this.copyTemplatedFiles(this.templatePath(TRANSFORMER_TEMPLATE_PATH), outputPath, this.artifactInfo);
+
+    this.outFiles = [outputPath];
   }
 
   async end() {

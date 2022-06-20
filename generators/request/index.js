@@ -75,12 +75,13 @@ module.exports = class RequestGenerator extends ArtifactGenerator {
 
     // Resolved Output Path
     const outputPath = this.destinationPath(this.artifactInfo.outDir, this.artifactInfo.outFile);
-
+    this.outFiles = [outputPath];
     this.copyTemplatedFiles(this.templatePath(REQUEST_TEMPLATE_PATH), outputPath, this.artifactInfo);
   }
 
   async end() {
     await super.end();
+
     if (!this.classOpts.hintAtTheEnd) {
       return;
     }

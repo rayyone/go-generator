@@ -3,8 +3,9 @@ package <%= domainPkgName %>svc
 import (
 	"github.com/rayyone/go-core/helpers/pagination"
 	"github.com/rayyone/go-core/ryerr"
-	"<%= appModName %>/app/domain/<%= domainPkgName %>/request"
+	"<%= appModName %>/app/domain/<%= domainName %>/request"
 	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/helpers"
 	"<%= appModName %>/app/foundation/container"
 	containerrepo "<%= appModName %>/app/foundation/repo/container"
 	"<%= appModName %>/app/foundation/service/base"
@@ -38,7 +39,7 @@ func (s *<%= className %>Svc) All(r *container.Request) ([]*model.<%= className 
 
 func (s *<%= className %>Svc) Find(r *container.Request, <%= camelName %>ID string) (*model.<%= className %>, error) {
 	var <%= camelName %> model.<%= className %>
-	err := s.Repo.<%= className %>.FindByID(r, &<%= camelName %>, <%= camelName %>ID)
+	_, err := s.Repo.<%= className %>.FindByID(r, &<%= camelName %>, <%= camelName %>ID)
 	if err != nil {
 		return nil, errcode.NotFound.New("Entity not found")
 	}
@@ -55,12 +56,12 @@ func (s *<%= className %>Svc) Store(r *container.Request, params *request.New<%=
 		return nil, err
 	}
 
-	if err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
+	if _, err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
 		return nil, err
 	}
 
 	var refresh<%= className %> model.<%= className %>
-	_ = s.Repo.<%= className %>.FindByID(r, &refresh<%= className %>, <%= camelName %>.ID)
+	_, err = s.Repo.<%= className %>.FindByID(r, &refresh<%= className %>, <%= camelName %>.ID)
 	refresh<%= className %>.GetAccessors()
 
 	return &refresh<%= className %>, nil
@@ -78,7 +79,7 @@ func (s *<%= className %>Svc) Update(r *container.Request, <%= camelName %>ID st
 		return nil, err
 	}
 
-	if err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
+	if _, err := s.Repo.<%= className %>.Save(r, &<%= camelName %>.<%= className %>Tbl); err != nil {
 		return nil, err
 	}
 
@@ -88,7 +89,7 @@ func (s *<%= className %>Svc) Update(r *container.Request, <%= camelName %>ID st
 }
 
 func (s *<%= className %>Svc) Delete(r *container.Request, <%= camelName %>ID string) error {
-	if err := s.Repo.<%= className %>.DeleteWhere(r, &model.<%= className %>{}, "id = ?", <%= camelName %>ID); err != nil {
+	if _, err := s.Repo.<%= className %>.DeleteWhere(r, &model.<%= className %>{}, "id = ?", <%= camelName %>ID); err != nil {
 		return err
 	}
 	return nil

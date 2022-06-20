@@ -5,7 +5,7 @@ Read this first if you're new to Go Language:
 
 ### Install
 
-Run `ry app [appname]`
+Run `rygo app [appname]`
 
 Replace go-core if needed, add this line to go.mod file
 

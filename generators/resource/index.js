@@ -82,6 +82,11 @@ module.exports = class ResourceGenerator extends ArtifactGenerator {
       this.artifactInfo.domainName,
       {hintAtTheEnd: false},
     ]);
+    this.composeWith(path.join(__dirname, '../route'), [
+      this.artifactInfo.name,
+      this.artifactInfo.domainName,
+      {hintAtTheEnd: false},
+    ]);
     await super.end();
 
     this.log();

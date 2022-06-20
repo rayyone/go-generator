@@ -14,7 +14,14 @@ const path = require('path');
 const g = require('../../lib/globalize');
 const helpers = require('../helpers');
 const {camelCase} = require('change-case');
-const {diDir, diRegDir, diRegCtlFile, newCtlImportPlaceholder, newCtlPlaceholder} = require('../helpers');
+const {
+  diDir,
+  diRegDir,
+  diRegCtlFile,
+  newCtlImportPlaceholder,
+  newCtlPlaceholder,
+  foundationCtnCtlFile,
+} = require('../helpers');
 
 const CONTROLLER_TEMPLATE_PATH = 'controller.go.ejs';
 const CUSTOM_CHOICE_VALUE = 'RyCustomController';
@@ -91,7 +98,7 @@ module.exports = class GoControllerGenerator extends ArtifactGenerator {
         path: this.destinationPath(diDir, diRegDir, diRegCtlFile),
         tplPath: path.resolve(__dirname, `./templates/import-dep.ejs`),
         placeholder: newCtlImportPlaceholder,
-        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainPkgName}/controller"`,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/controller"`,
       },
       {
         path: this.destinationPath(diDir, diRegDir, diRegCtlFile),
@@ -99,9 +106,23 @@ module.exports = class GoControllerGenerator extends ArtifactGenerator {
         placeholder: newCtlPlaceholder,
         skip: `${this.artifactInfo.domainPkgName}ctl.New${this.artifactInfo.pascalName}Ctl`,
       },
+      {
+        path: this.destinationPath(foundationCtnCtlFile),
+        tplPath: path.resolve(__dirname, `./templates/import-dep.ejs`),
+        placeholder: newCtlImportPlaceholder,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/controller"`,
+      },
+      {
+        path: this.destinationPath(foundationCtnCtlFile),
+        tplPath: path.resolve(__dirname, `./templates/add-ctn-ctl.ejs`),
+        placeholder: newCtlPlaceholder,
+        skip: `${this.artifactInfo.domainPkgName}ctl.${this.artifactInfo.pascalName}Ctl`,
+      },
     ];
 
+    this.outFiles = [outputPath];
     for (const updateFile of updateFiles) {
+      this.outFiles.push(updateFile.path);
       await super._replacePlaceholderToFiles(
         updateFile.path,
         updateFile.tplPath,

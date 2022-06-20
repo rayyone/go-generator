@@ -1,0 +1,7 @@
+pvGroup.GET("<%= pluralSnakeName %>", ctl.<%= pascalName %>.All)
+pvGroup.GET("<%= pluralSnakeName %>/:<%= camelName %>ID", ctl.<%= pascalName %>.GetByID)
+pvGroup.POST("<%= pluralSnakeName %>", ctl.<%= pascalName %>.Store)
+pvGroup.PUT("<%= pluralSnakeName %>/:<%= camelName %>ID", ctl.<%= pascalName %>.Update)
+pvGroup.DELETE("<%= pluralSnakeName %>/:<%= camelName %>ID", ctl.<%= pascalName %>.Delete)
+
+<%= newRoutePlaceholder %>

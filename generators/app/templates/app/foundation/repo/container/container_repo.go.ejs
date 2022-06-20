@@ -3,6 +3,7 @@ package containerrepo
 import (
 	authrp "<%= appModName %>/app/domain/auth/repo"
 	userrp "<%= appModName %>/app/domain/user/repo"
+	// {{ry_placeholder:repo_import}}
 )
 
 type Repo struct {
@@ -14,4 +15,5 @@ type Repo struct {
 	Role             authrp.Role
 	RoleUser         authrp.RoleUser
 	UserSocial       userrp.UserSocial
+	// {{ry_placeholder:repo_new}}
 }

@@ -3,6 +3,7 @@ package migration
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
+<%- include('import') %>
 )
 
 func AddNewColumnsTo<%= pluralClassName %>Table() *gormigrate.Migration {

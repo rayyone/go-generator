@@ -23,6 +23,10 @@ exports.ryConfigModelDir = 'models';
 exports.ryConfigFileName = 'index.js';
 exports.configDir = 'gen-config';
 exports.modelDir = 'model';
+exports.foundationDir = 'foundation';
+exports.foundationCtnCtlFile = `${exports.sourceRootDir}/foundation/controller/container/container_controller.go`;
+exports.foundationCtnRepoFile = `${exports.sourceRootDir}/foundation/repo/container/container_repo.go`;
+exports.foundationCtnSvcFile = `${exports.sourceRootDir}/foundation/service/container/container_service.go`;
 exports.diDir = 'di';
 exports.diRegDir = 'registrator';
 exports.diRegCtlFile = 'controllers.go';
@@ -34,6 +38,7 @@ exports.controllerDir = 'controller';
 exports.requestDir = 'request';
 exports.repositoryDir = 'repo';
 exports.gormDir = 'gorm';
+exports.routeDir = 'route';
 exports.serviceDir = 'service';
 exports.migrationDir = 'migration';
 exports.sourceDomainDir = `${exports.sourceRootDir}/${exports.domainDir}`;
@@ -44,13 +49,17 @@ exports.getPlaceholder = function (type, isCommentedCode = true) {
 };
 
 exports.newPropsPlaceholder = exports.getPlaceholder('new_props');
+exports.newMigrationPlaceholder = exports.getPlaceholder('migration_new');
 exports.newCtlPlaceholder = exports.getPlaceholder('ctl_new');
 exports.newCtlImportPlaceholder = exports.getPlaceholder('ctl_import');
 exports.newSvcPlaceholder = exports.getPlaceholder('svc_new');
 exports.newSvcImportPlaceholder = exports.getPlaceholder('svc_import');
 exports.newRepoPlaceholder = exports.getPlaceholder('repo_new');
 exports.newRepoImportPlaceholder = exports.getPlaceholder('repo_import');
+exports.newGormImportPlaceholder = exports.getPlaceholder('gorm_import');
 exports.newRepoBindPlaceholder = exports.getPlaceholder('repo_bind');
+exports.newRoutePlaceholder = exports.getPlaceholder('new_route_resources');
+exports.newRouteImportPlaceholder = exports.getPlaceholder('new_route_resources_import');
 
 exports.golangTypeChoices = ['string', 'bool', 'int', 'int64', 'time.Time', 'postgres.Jsonb', 'array', 'uuid'];
 
@@ -84,8 +93,13 @@ exports.getModelFileName = function (modelName) {
 exports.getModelSchemeFileName = function (modelName) {
   return `${paramCase(toFileName(modelName))}.js`;
 };
+
 exports.getTransformerFileName = function (className) {
   return `${toFileName(className)}.go`;
+};
+
+exports.getRouteFileName = function (className) {
+  return `v1.go`;
 };
 
 exports.getControllerFileName = function (className) {

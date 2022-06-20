@@ -116,8 +116,9 @@ module.exports = class NewPropGenerator extends ModelGenerator {
         tplPath: path.resolve(__dirname, `../repository/templates/print-props.ejs`),
       },
     ];
-
+    this.outFiles = [];
     for (const updateFile of updateFiles) {
+      this.outFiles.push(updateFile.path);
       await super._replacePlaceholderToFiles(updateFile.path, updateFile.tplPath, newPropsPlaceholder);
     }
 
@@ -132,6 +133,8 @@ module.exports = class NewPropGenerator extends ModelGenerator {
       migrationOutputPath,
       this.artifactInfo,
     );
+
+    this.outFiles.push(migrationOutputPath);
   }
 
   async end() {

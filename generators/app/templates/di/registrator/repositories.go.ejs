@@ -3,10 +3,12 @@ package registrator
 import (
 	"github.com/google/wire"
 	authrp "<%= appModName %>/app/domain/auth/repo"
-	authg "<%= appModName %>/app/domain/auth/repo/gorm"
 	userrp "<%= appModName %>/app/domain/user/repo"
-	userg "<%= appModName %>/app/domain/user/repo/gorm"
 	// {{ry_placeholder:repo_import}}
+
+	authg "<%= appModName %>/app/domain/auth/repo/gorm"
+	userg "<%= appModName %>/app/domain/user/repo/gorm"
+	// {{ry_placeholder:gorm_import}}
 )
 
 var ReposSet = wire.NewSet(

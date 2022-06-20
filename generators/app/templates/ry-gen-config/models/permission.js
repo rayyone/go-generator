@@ -6,6 +6,7 @@
  */
 
 const permission = {
+  domain: 'auth',
   props: [
     // {{ry_placeholder:new_props}}
     {

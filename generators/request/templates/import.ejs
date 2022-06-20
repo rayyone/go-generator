@@ -1,0 +1,10 @@
+<% if (modelScheme && modelScheme.props) { -%>
+	<% propArr = Object.values(modelScheme.props) %>
+	<% for (var l = propArr.length, i = 0; i < l; i++) { %>
+		<% prop = propArr[i] %>
+		<% if (prop.orgType === 'time.Time') { -%>
+	"time"
+			<% break -%>
+		<% } %>
+	<% } %>
+<% } -%>

@@ -4,6 +4,7 @@ import (
 	"<%= appModName %>/app/domain/auth/controller"
 	pingctl "<%= appModName %>/app/domain/ping/controller"
 	userctl "<%= appModName %>/app/domain/user/controller"
+	// {{ry_placeholder:ctl_import}}
 )
 
 type Controller struct {
@@ -15,4 +16,5 @@ type Controller struct {
 	Role        *authctl.RoleCtl
 	RoleUser    *authctl.RoleUserCtl
 	Auth        *authctl.AuthCtl
+	// {{ry_placeholder:ctl_new}}
 }

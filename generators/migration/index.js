@@ -12,7 +12,7 @@ const debug = require('../../lib/debug')('migration-generator');
 const chalk = require('chalk');
 const path = require('path');
 const helpers = require('../helpers');
-const {format2Digit, getGormType} = require('../helpers');
+const {format2Digit, getGormType, newRoutePlaceholder, newMigrationPlaceholder} = require('../helpers');
 const {snakeCase} = require('change-case');
 const MIGRATION_TEMPLATE_PATH = 'migration.go.ejs';
 const CUSTOM_CHOICE_VALUE = 'RyCustomMigration';
@@ -81,7 +81,7 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
     super.getOutDir(path.resolve(helpers.sourceRootDir, helpers.databaseDir, helpers.migrationDir));
   }
 
-  scaffold() {
+  async scaffold() {
     if (this.shouldExit()) return false;
 
     debug('scaffolding');

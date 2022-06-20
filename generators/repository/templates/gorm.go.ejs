@@ -6,10 +6,11 @@ import (
 	"github.com/rayyone/go-core/repositories"
 	"github.com/rayyone/go-core/ryerr"
 	"gorm.io/gorm"
-	"<%= appModName %>/app/domain/<%= domainPkgName %>/repo"
+	"<%= appModName %>/app/domain/<%= domainName %>/repo"
 	"<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/foundation/repo/base"
 	"<%= appModName %>/app/model"
+<%- include('import') %>
 )
 
 type <%= className %>Gorm struct {
@@ -34,13 +35,6 @@ func New<%= className %>Gorm() *<%= className %>Gorm {
 	}
 
 	return gorm<%= className %>Repo
-}
-
-func getBaseQueryBuilder(r corecontainer.RequestInf) *gorm.DB {
-	return r.GetDBM().GetTx().
-		Set("gorm:auto_preload", false).
-		Set("gorm:association_autocreate", false).
-		Set("gorm:association_autoupdate", false)
 }
 
 func (g *<%= className %>Gorm) All(r *container.Request) ([]*model.<%= className %>, *pagination.Paginator, error) {

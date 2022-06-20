@@ -24,6 +24,9 @@ const {
   newRepoImportPlaceholder,
   newRepoPlaceholder,
   newRepoBindPlaceholder,
+  foundationCtnCtlFile,
+  foundationCtnRepoFile,
+  newGormImportPlaceholder,
 } = require('../helpers');
 
 const REPOSITORY_TEMPLATE_PATH = 'repo.go.ejs';
@@ -99,12 +102,20 @@ module.exports = class GoRepositoryGenerator extends ArtifactGenerator {
 
     this.copyTemplatedFiles(this.templatePath(GORM_TEMPLATE_PATH), gormOutputPath, this.artifactInfo);
 
+    this.outFiles = [repoOutputPath, gormOutputPath];
+
     const updateFiles = [
       {
         path: this.destinationPath(diDir, diRegDir, diRegRepoFile),
-        tplPath: path.resolve(__dirname, `./templates/import-dep.ejs`),
+        tplPath: path.resolve(__dirname, `./templates/import-repo.ejs`),
         placeholder: newRepoImportPlaceholder,
-        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainPkgName}/repo"`,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/repo"`,
+      },
+      {
+        path: this.destinationPath(diDir, diRegDir, diRegRepoFile),
+        tplPath: path.resolve(__dirname, `./templates/import-gorm.ejs`),
+        placeholder: newGormImportPlaceholder,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/repo/gorm"`,
       },
       {
         path: this.destinationPath(diDir, diRegDir, diRegRepoFile),
@@ -118,9 +129,22 @@ module.exports = class GoRepositoryGenerator extends ArtifactGenerator {
         placeholder: newRepoBindPlaceholder,
         skip: `new(${this.artifactInfo.domainPkgName}rp.${this.artifactInfo.pascalName})`,
       },
+      {
+        path: this.destinationPath(foundationCtnRepoFile),
+        tplPath: path.resolve(__dirname, `./templates/import-repo.ejs`),
+        placeholder: newRepoImportPlaceholder,
+        skip: `"${this.artifactInfo.appModName}/app/domain/${this.artifactInfo.domainName}/repo"`,
+      },
+      {
+        path: this.destinationPath(foundationCtnRepoFile),
+        tplPath: path.resolve(__dirname, `./templates/add-ctn-repo.ejs`),
+        placeholder: newRepoPlaceholder,
+        skip: `${this.artifactInfo.domainPkgName}rp.${this.artifactInfo.pascalName}`,
+      },
     ];
 
     for (const updateFile of updateFiles) {
+      this.outFiles.push(updateFile.path);
       await super._replacePlaceholderToFiles(
         updateFile.path,
         updateFile.tplPath,

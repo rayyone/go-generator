@@ -6,6 +6,7 @@
  */
 
 const userSocial = {
+  domain: 'user',
   props: [
     // {{ry_placeholder:new_props}}
     {

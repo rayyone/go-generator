@@ -1,0 +1,28 @@
+package <%= domainPkgName %>route
+
+import (
+	"github.com/gin-gonic/gin"
+	containerctl "<%= appModName %>/app/foundation/controller/container"
+	"<%= appModName %>/app/foundation/middleware"
+)
+
+type <%= pascalDomainName %>Route struct {
+	routeGroup *gin.RouterGroup
+}
+
+func (p *<%= pascalDomainName %>Route) Routes(ctl *containerctl.Controller) {
+	// Public routes
+	_ = p.routeGroup.Group("")
+
+	// Private routes
+	pvGroup := p.routeGroup.Group("")
+	middleware.ProtectRoutes(pvGroup, ctl.User.Service)
+
+<%- include('add-route') %>
+}
+
+func New<%= pascalDomainName %>Route(rg *gin.RouterGroup) *<%= pascalDomainName %>Route {
+	return &<%= pascalDomainName %>Route{
+		routeGroup: rg,
+	}
+}
