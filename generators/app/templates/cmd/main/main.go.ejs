@@ -43,7 +43,7 @@ func main() {
 	sqlDB.SetMaxIdleConns(10)
 
 	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetMaxOpenConns(70)
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(time.Hour)
@@ -58,14 +58,17 @@ func main() {
 	go func() {
 		scheduler.RunCron(diContainer.Services)
 	}()
-
+	log.Println("Server is running at port: ", conf.Server.Port)
 	server := diContainer.HttpServer
 	server.Serve()
 }
 
 func setupLogger() {
 	gin.DisableConsoleColor() // disable since we write to file log
-
+	err := os.MkdirAll("log", 0666)
+	if err != nil {
+		return
+	}
 	logFile, err := os.OpenFile("log/gin.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)

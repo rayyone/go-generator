@@ -89,10 +89,8 @@ func NewAppleAuth(clientID *string) *AppleAuth {
 		clientID = aws.String(conf.AppleAPI.Default)
 	}
 	var authConfig config.AppleAuthConfiguration
-	for _, auth := range conf.AppleAPI.Auths {
-		if auth.ClientID == *clientID {
-			authConfig = auth
-		}
+	if conf.AppleAPI.ClientID == *clientID {
+		authConfig = conf.AppleAPI.AppleAuthConfiguration
 	}
 	appleAuth := AppleAuth(authConfig)
 

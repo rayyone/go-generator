@@ -5,14 +5,15 @@ database:
   password: ""
   host: "127.0.0.1"
   port: "5432"
-  logLevel: "Info"
+  logLevel: "Info" # Silent, Error, Warn, Info. https://gorm.io/docs/logger.html#Log-Levels
 
 app:
-  package: ""<%= appModName %>"
+  package: "<%= appModName %>"
   env: "local"
   httpClientDebug: true
   enableCron: true
   apiDebug: true
+  ginDebugMode: "debug" # debug, release, test
   basicAuthUser: admin
   basicAuthPass: secret123
 
@@ -32,16 +33,15 @@ googleAPI:
 
 appleAPI:
   default: "sub.domain.com"
-  auths:
-    - clientID: "sub.domain.com"
-      teamID: "XXXXXXXXXX"
-      keyID: "XXXXXXXXXX"
-      p8: |-
-        -----BEGIN PRIVATE KEY-----
-        PRIVATE_KEY_GOES_HERE...........................................
-        ................................................................
-        ........
-        -----END PRIVATE KEY-----
+  clientID: "sub.domain.com"
+  teamID: "XXXXXXXXXX"
+  keyID: "XXXXXXXXXX"
+  p8: |-
+    -----BEGIN PRIVATE KEY-----
+    PRIVATE_KEY_GOES_HERE...........................................
+    ................................................................
+    ........
+    -----END PRIVATE KEY-----
 
 others:
   verifyAccountDomain: "https://rayyone.com"

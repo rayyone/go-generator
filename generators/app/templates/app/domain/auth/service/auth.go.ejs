@@ -85,7 +85,13 @@ func (s *AuthSvc) Login(r *container.Request, params *request.Login) (*model.Use
 
 func (s *AuthSvc) saveAccessToken(r *container.Request, token *sharedscheme.Token, user *model.User) error {
 	tokenExpiredAt := time.Unix(token.ExpiredAt, 0)
-	_, err := s.Repo.AccessToken.Create(r.Request, &model.AccessTokenTbl{
+	var existed model.AccessToken
+	tx, err := s.Repo.AccessToken.FirstBy(r, &existed, "access_token = ? AND user_id = ?", token.AccessToken, user.ID)
+	if tx.RowsAffected > 0 {
+		return nil
+	}
+
+	_, err = s.Repo.AccessToken.Create(r.Request, &model.AccessTokenTbl{
 		UserID:         user.ID,
 		AccessToken:    &token.AccessToken,
 		TokenExpiredAt: &tokenExpiredAt,

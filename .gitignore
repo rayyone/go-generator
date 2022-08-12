@@ -25,3 +25,6 @@ buck-out/
 
 .env
 *.hprof
+
+log/
+docs/

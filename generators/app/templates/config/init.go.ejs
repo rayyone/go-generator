@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -12,9 +13,13 @@ var once sync.Once
 
 func All() *Configuration {
 	once.Do(func() {
-		viper.SetConfigName("config")
+		viper.SetConfigName("config,local")
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(".")
+
+		viper.AutomaticEnv()
+		viper.SetEnvPrefix("env")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 		if err := viper.ReadInConfig(); err != nil {
 			log.Fatalf("Error reading config file, %s", err)
