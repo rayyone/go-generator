@@ -1,5 +1,5 @@
 {
-  "name": "@rayyone/go-generator",
+  "name": "ry-go-generator",
   "description": "Yeoman Code Generator for Rayyone Golang. Inspired by Loopback 4 CLI generator",
   "version": "0.0.1",
   "author": "Rayyone Ltd.",
