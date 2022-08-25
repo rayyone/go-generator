@@ -24,6 +24,10 @@ func (model *AccessToken) TableName() string {
 	return "access_tokens"
 }
 
+func (modelTbl *AccessTokenTbl) TableName() string {
+	return "access_tokens"
+}
+
 func (model *AccessToken) GetAccessors() {}
 
 func (modelTbl *AccessTokenTbl) BeforeCreate(scope *gorm.DB) (err error) {

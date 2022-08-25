@@ -7,17 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserSocial struct {
+	ID       string `gorm:"type:uuid;primary_key;auto_increment:false"`
+	UserID   string `gorm:"not null;type:uuid;index"`
+	Provider string `gorm:"not null;type:varchar(191);index"`
+	SocialID string `gorm:"not null;type:varchar(191);index"`
+	model.BaseTimestamps
+}
+
 func CreateUserSocialsTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102182003_user_create_user_socials_table",
 		Migrate: func(tx *gorm.DB) error {
-			type UserSocial struct {
-				ID       string `gorm:"type:uuid;primary_key;auto_increment:false"`
-				UserID   string `gorm:"not null;type:uuid;index"`
-				Provider string `gorm:"not null;type:varchar(191);index"`
-				SocialID string `gorm:"not null;type:varchar(191);index"`
-				model.BaseTimestamps
-			}
+
 
 			if err := tx.AutoMigrate(&UserSocial{}); err != nil {
 				return err

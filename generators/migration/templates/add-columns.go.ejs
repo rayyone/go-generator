@@ -6,13 +6,14 @@ import (
 <%- include('import') %>
 )
 
+type <%= className %> struct {
+	<%- include('print-props') %>
+}
+
 func AddNewColumnsTo<%= pluralClassName %>Table() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
-			type <%= className %> struct {
-<%- include('print-props') %>
-			}
 
 			if err := tx.AutoMigrate(&<%= className %>{}); err != nil {
 				return err

@@ -88,6 +88,6 @@
     "templateDependencies": {}
   },
   "lint-staged": {
-    "generators/**/*.{js,jsx}": ["npx eslint --fix', 'npx prettier --write"]
+    "generators/**/*.{js,jsx}": ["npx eslint --fix", "npx prettier --write"]
   }
 }

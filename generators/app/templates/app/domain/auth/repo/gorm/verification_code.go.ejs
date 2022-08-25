@@ -11,7 +11,7 @@ import (
 	"<%= appModName %>/app/domain/auth/repo"
 	"<%= appModName %>/app/errcode"
 	"<%= appModName %>/app/foundation/container"
-	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/foundation/repo/base"
 	"<%= appModName %>/app/helpers"
 	"<%= appModName %>/app/model"
 	"strconv"
@@ -19,7 +19,7 @@ import (
 )
 
 type VerificationCodeGorm struct {
-	*baserp.BaseGormRepository
+	*baserepo.BaseGormRepository
 }
 
 func (g *VerificationCodeGorm) SkipBaseQuery() authrp.VerificationCode {
@@ -31,7 +31,7 @@ func (g *VerificationCodeGorm) SkipBaseQuery() authrp.VerificationCode {
 }
 
 func NewVerificationCodeGorm() *VerificationCodeGorm {
-	br := baserp.NewBaseGormRepository()
+	br := baserepo.NewBaseGormRepository()
 	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
 		return r.GetDBM().GetTx()
 	}

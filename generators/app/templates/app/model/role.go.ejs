@@ -29,6 +29,10 @@ func (model *Role) TableName() string {
 	return "roles"
 }
 
+func (modelTbl *RoleTbl) TableName() string {
+	return "roles"
+}
+
 func (model *Role) GetAccessors() {}
 
 func (modelTbl *RoleTbl) BeforeCreate(scope *gorm.DB) (err error) {

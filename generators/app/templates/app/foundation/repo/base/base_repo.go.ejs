@@ -4,6 +4,7 @@ import (
 	corecontainer "github.com/rayyone/go-core/container"
 	corerepo "github.com/rayyone/go-core/repositories"
 	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
 	"<%= appModName %>/config"
 	"strings"
 )
@@ -12,13 +13,25 @@ type BaseGormRepository struct {
 	*corerepo.CoreGormRepository
 }
 
-func GetOrderBy(urlParams map[string]string, defOrder string) string {
+func GetOrderBy(urlParams map[string]string, modelObj model.Model, defOrder string) string {
+	tableName := model.GetTableName(modelObj)
 	if urlParams["order_by"] != "" {
 		orderBy := strings.Split(urlParams["order_by"], ",")
-		return orderBy[0] + " " + orderBy[1]
+		return tableName + "." + orderBy[0] + " " + orderBy[1]
 	}
-	return defOrder
+
+	orderFields := strings.Split(defOrder, ",")
+	orderQuery := ""
+	for i, field := range orderFields {
+		if i == 0 {
+			orderQuery += tableName + "." + strings.TrimSpace(field)
+		} else {
+			orderQuery += ", " + tableName + "." + strings.TrimSpace(field)
+		}
+	}
+	return orderQuery
 }
+
 
 func NewBaseGormRepository() *BaseGormRepository {
 	conf := config.All()

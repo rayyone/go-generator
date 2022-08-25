@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 	"<%= appModName %>/app/domain/auth/repo"
 	"<%= appModName %>/app/foundation/container"
-	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/foundation/repo/base"
 	"<%= appModName %>/app/model"
 )
 
 type PermissionGorm struct {
-	*baserp.BaseGormRepository
+	*baserepo.BaseGormRepository
 }
 
 func (g *PermissionGorm) SkipBaseQuery() authrp.Permission {
@@ -25,7 +25,7 @@ func (g *PermissionGorm) SkipBaseQuery() authrp.Permission {
 }
 
 func NewPermissionGorm() *PermissionGorm {
-	br := baserp.NewBaseGormRepository()
+	br := baserepo.NewBaseGormRepository()
 	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
 		return r.GetDBM().GetTx()
 	}
@@ -61,7 +61,7 @@ func (g *PermissionGorm) All(r *container.Request) ([]*model.Permission, *pagina
 
 	tx.Model(&model.Permission{}).Count(&total)
 
-	tx = tx.Order(baserp.GetOrderBy(r.UrlParams.Str, "permissions.module ASC, permissions.action ASC"))
+	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, &model.Permission{}, "module ASC, action ASC"))
 	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
 	if err != nil {
 		return nil, nil, ryerr.New(err.Error())

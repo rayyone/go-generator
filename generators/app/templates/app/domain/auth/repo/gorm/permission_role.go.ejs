@@ -5,11 +5,11 @@ import (
 	corerp "github.com/rayyone/go-core/repositories"
 	"gorm.io/gorm"
 	"<%= appModName %>/app/domain/auth/repo"
-	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/foundation/repo/base"
 )
 
 type PermissionRoleGorm struct {
-	*baserp.BaseGormRepository
+	*baserepo.BaseGormRepository
 }
 
 func (g *PermissionRoleGorm) SkipBaseQuery() authrp.PermissionRole {
@@ -21,7 +21,7 @@ func (g *PermissionRoleGorm) SkipBaseQuery() authrp.PermissionRole {
 }
 
 func NewPermissionRoleGorm() *PermissionRoleGorm {
-	br := baserp.NewBaseGormRepository()
+	br := baserepo.NewBaseGormRepository()
 	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
 		return r.GetDBM().GetTx()
 	}

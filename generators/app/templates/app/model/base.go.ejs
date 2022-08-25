@@ -14,3 +14,14 @@ type BaseTimestamps struct {
 	Timestamps
 	DeletedAt *gorm.DeletedAt `json:"-" sql:"index" gorm:"type:timestamp with time zone;" firestore:"deleted_at"`
 }
+
+type Model interface {
+	TableName() string
+}
+
+func GetCol(model Model, colName string) string {
+	return model.TableName() + "." + colName
+}
+func GetTableName(model Model) string {
+	return model.TableName()
+}

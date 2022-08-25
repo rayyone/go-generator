@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 	"<%= appModName %>/app/domain/user/repo"
 	"<%= appModName %>/app/foundation/container"
-	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/foundation/repo/base"
 	"<%= appModName %>/app/model"
 )
 
 type UserGorm struct {
-	*baserp.BaseGormRepository
+	*baserepo.BaseGormRepository
 }
 
 func (g *UserGorm) SkipBaseQuery() userrp.User {
@@ -25,7 +25,7 @@ func (g *UserGorm) SkipBaseQuery() userrp.User {
 }
 
 func NewUserGorm() *UserGorm {
-	br := baserp.NewBaseGormRepository()
+	br := baserepo.NewBaseGormRepository()
 	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
 		return r.GetDBM().GetTx()
 	}
@@ -57,7 +57,7 @@ func (g *UserGorm) All(r *container.Request) ([]*model.User, *pagination.Paginat
 
 	tx.Model(&model.User{}).Count(&total)
 
-	tx = tx.Order(baserp.GetOrderBy(r.UrlParams.Str, "users.name ASC, users.created_at DESC"))
+	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, &model.User{}, "name ASC, created_at DESC"))
 
 	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&users).Error
 	if err != nil {

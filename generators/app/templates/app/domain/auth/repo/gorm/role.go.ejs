@@ -8,13 +8,13 @@ import (
 	"gorm.io/gorm"
 	"<%= appModName %>/app/domain/auth/repo"
 	"<%= appModName %>/app/foundation/container"
-	baserp "<%= appModName %>/app/foundation/repo/base"
+	"<%= appModName %>/app/foundation/repo/base"
 	"<%= appModName %>/app/model"
 	"strings"
 )
 
 type RoleGorm struct {
-	*baserp.BaseGormRepository
+	*baserepo.BaseGormRepository
 }
 
 func (g *RoleGorm) SkipBaseQuery() authrp.Role {
@@ -26,7 +26,7 @@ func (g *RoleGorm) SkipBaseQuery() authrp.Role {
 }
 
 func NewRoleGorm() *RoleGorm {
-	br := baserp.NewBaseGormRepository()
+	br := baserepo.NewBaseGormRepository()
 	br.BaseQuery = func(r corecontainer.RequestInf) *gorm.DB {
 		return r.GetDBM().GetTx().
 			Preload("Permissions")

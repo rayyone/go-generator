@@ -20,6 +20,10 @@ func (model *<%= className %>) TableName() string {
 	return "<%= tableName %>"
 }
 
+func (modelTbl *<%= className %>Tbl) TableName() string {
+	return "<%= tableName %>"
+}
+
 func (model *<%= className %>) GetAccessors() {}
 
 func (modelTbl *<%= className %>Tbl) BeforeCreate(scope *gorm.DB) (err error) {

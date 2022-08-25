@@ -6,17 +6,19 @@ import (
 	"<%= appModName %>/app/model"
 )
 
+type Permission struct {
+	ID          string  `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+	Action      string  `gorm:"not null;column:action;type:varchar(255);uniqueIndex:idx_action_module"`
+	Description *string `gorm:"column:description;type:text"`
+	Module      string  `gorm:"not null;column:module;type:varchar(255);uniqueIndex:idx_action_module"`
+	model.Timestamps
+}
+
 func CreatePermissionsTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102191003_auth_create_permissions_table",
 		Migrate: func(tx *gorm.DB) error {
-			type Permission struct {
-				ID          string  `gorm:"primaryKey;type:uuid;autoIncrement:false"`
-				Action      string  `gorm:"not null;column:action;type:varchar(255);uniqueIndex:idx_action_module"`
-				Description *string `gorm:"column:description;type:text"`
-				Module      string  `gorm:"not null;column:module;type:varchar(255);uniqueIndex:idx_action_module"`
-				model.Timestamps
-			}
+
 			if err := tx.AutoMigrate(&Permission{}); err != nil {
 				return err
 			}

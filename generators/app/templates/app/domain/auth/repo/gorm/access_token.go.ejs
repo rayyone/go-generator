@@ -53,7 +53,7 @@ func (g *AccessTokenGorm) All(r *container.Request) ([]*model.AccessToken, *pagi
 
 	tx.Model(&model.AccessToken{}).Count(&total)
 
-	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, "access_tokens.created_at DESC"))
+	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, &model.AccessToken{}, "created_at DESC"))
 	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
 	if err != nil {
 		return nil, nil, ryerr.New(err.Error())

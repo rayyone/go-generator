@@ -7,17 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type PermissionRole struct {
+	ID           string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+	PermissionID string `gorm:"not null;column:permission_id;type:uuid;uniqueIndex:idx_permission_role"`
+	RoleID       string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_permission_role"`
+	model.Timestamps
+}
+
 func CreatePermissionRolesTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102191004_auth_create_permission_roles_table",
 		Migrate: func(tx *gorm.DB) error {
 			var err error
-			type PermissionRole struct {
-				ID           string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
-				PermissionID string `gorm:"not null;column:permission_id;type:uuid;uniqueIndex:idx_permission_role"`
-				RoleID       string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_permission_role"`
-				model.Timestamps
-			}
+
 			if err = tx.AutoMigrate(&PermissionRole{}); err != nil {
 				return err
 			}

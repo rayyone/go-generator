@@ -18,12 +18,8 @@ const {
   diRegSvcFile,
   newSvcPlaceholder,
   newSvcImportPlaceholder,
-  foundationCtnCtlFile,
-  newCtlImportPlaceholder,
-  newCtlPlaceholder,
   foundationCtnSvcFile,
 } = require('../helpers');
-const g = require('../../lib/globalize');
 
 const SERVICE_TEMPLATE_PATH = 'service.go.ejs';
 const CUSTOM_CHOICE_VALUE = 'RyCustomService';
@@ -125,6 +121,8 @@ module.exports = class GoServiceGenerator extends ArtifactGenerator {
 
     for (const updateFile of updateFiles) {
       this.outFiles.push(updateFile.path);
+      console.log('updating:', updateFile.path, updateFile.tplPath, updateFile.placeholder);
+
       await super._replacePlaceholderToFiles(
         updateFile.path,
         updateFile.tplPath,

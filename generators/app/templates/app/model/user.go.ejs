@@ -28,6 +28,10 @@ func (model *User) TableName() string {
 	return "users"
 }
 
+func (modelTbl *UserTbl) TableName() string {
+	return "users"
+}
+
 func (model *User) GetPermissions() {
 	if model.Permissions == nil {
 		model.Permissions = make(map[string]map[string]bool)

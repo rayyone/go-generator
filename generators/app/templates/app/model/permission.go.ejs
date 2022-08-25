@@ -22,6 +22,10 @@ func (model *Permission) TableName() string {
 	return "permissions"
 }
 
+func (modelTbl *PermissionTbl) TableName() string {
+	return "permissions"
+}
+
 func (model *Permission) GetAccessors() {}
 
 func (modelTbl *PermissionTbl) BeforeCreate(scope *gorm.DB) (err error) {

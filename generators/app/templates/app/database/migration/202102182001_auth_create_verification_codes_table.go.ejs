@@ -7,6 +7,15 @@ import (
 	"time"
 )
 
+type VerificationCode struct {
+	ID        string    `gorm:"type:uuid;primary_key;auto_increment:false"`
+	UserID    string    `gorm:"not null;type:uuid;index"`
+	Code      string    `gorm:"not null;type:varchar(200);unique_index"`
+	Type      string    `gorm:"not null;type:varchar(200);index"`
+	ExpiredAt time.Time `gorm:"null"`
+	model.Timestamps
+}
+
 func CreateVerificationCodesTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102182001_auth_create_verification_codes_table",

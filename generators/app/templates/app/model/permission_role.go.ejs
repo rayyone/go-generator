@@ -17,8 +17,11 @@ type PermissionRoleTbl struct {
 	Timestamps
 }
 
-// TableName sets the insert table name for this struct type
 func (model *PermissionRole) TableName() string {
+	return "permission_roles"
+}
+
+func (modelTbl *PermissionRoleTbl) TableName() string {
 	return "permission_roles"
 }
 
