@@ -6,23 +6,21 @@ import (
 	"<%= appModName %>/app/model"
 )
 
-type Users struct {
-	ID             string  `gorm:"type:uuid;primaryKey;autoIncrement:false"`
-	Email          string  `gorm:"not null;type:varchar(255);uniqueIndex:idx_user_email"`
-	Name           *string `gorm:"null;type:varchar(255)"`
-	ProfilePicture *string `gorm:"null;type:varchar(500)"`
-	IsVerified     bool    `gorm:"not null;default:false"`
-	Password       string  `gorm:"null;type:varchar(500)"`
-	model.BaseTimestamps
-}
-
 func CreateUsersTable() *gormigrate.Migration {
+
 	return &gormigrate.Migration{
 		ID: "202102182000_user_create_users_table",
 		Migrate: func(tx *gorm.DB) error {
-
-
-			if err := tx.AutoMigrate(&Users{}); err != nil {
+			type Users struct {
+				ID             string  `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				Email          string  `gorm:"not null;type:varchar(255);uniqueIndex:idx_user_email"`
+				Name           *string `gorm:"null;type:varchar(255)"`
+				ProfilePicture *string `gorm:"null;type:text"`
+				IsVerified     bool    `gorm:"not null;default:false"`
+				Password       string  `gorm:"null;type:varchar(500)"`
+				model.BaseTimestamps
+			}
+			if err := tx.Table("users").AutoMigrate(&Users{}); err != nil {
 				return err
 			}
 			if err := tx.Exec(`CREATE UNIQUE INDEX users_email_uidx

@@ -7,23 +7,21 @@ import (
 	"time"
 )
 
-type AccessToken struct {
-	ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
-	UserID         string     `gorm:"not null;type:uuid"`
-	AccessToken    *string    `gorm:"null;type:text;uniqueIndex:idx_access_tokens_token"`
-	TokenExpiredAt *time.Time `gorm:"null;type:timestamp with time zone"`
-	Revoke         *bool      `gorm:"null;type:boolean;default:false"`
-
-	model.Timestamps
-}
-
-
 func CreateAccessTokensTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202206071232_auth_create_access_token_table",
 		Migrate: func(tx *gorm.DB) error {
+			type AccessToken struct {
+				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				UserID         string     `gorm:"not null;type:uuid"`
+				AccessToken    *string    `gorm:"null;type:text;uniqueIndex:idx_access_tokens_token"`
+				TokenExpiredAt *time.Time `gorm:"null;type:timestamp with time zone"`
+				Revoke         *bool      `gorm:"null;type:boolean;default:false"`
 
-			if err := tx.AutoMigrate(&AccessToken{}); err != nil {
+				model.Timestamps
+			}
+
+			if err := tx.Table("access_tokens").AutoMigrate(&AccessToken{}); err != nil {
 				return err
 			}
 

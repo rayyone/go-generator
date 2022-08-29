@@ -5,4 +5,8 @@
 	"time"
 		<% break -%>
 	<% } %>
+	<% if (prop.goType === '[]string' || prop.goType === '[]*string') { -%>
+	"github.com/lib/pq"
+		<% break -%>
+	<% } %>
 <% } %>

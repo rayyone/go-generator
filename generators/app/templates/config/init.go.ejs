@@ -13,7 +13,7 @@ var once sync.Once
 
 func All() *Configuration {
 	once.Do(func() {
-		viper.SetConfigName("config,local")
+		viper.SetConfigName("config.local")
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(".")
 

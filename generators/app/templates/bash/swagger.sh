@@ -22,5 +22,5 @@ all_dir=(
 
 dir_str=$(join_by , "${all_dir[@]}")
 
-cmd="swag init -d $dir_str"
+cmd="swag init --parseDependency --parseDepth 1 -d $dir_str"
 echo "$cmd" && eval "$cmd"

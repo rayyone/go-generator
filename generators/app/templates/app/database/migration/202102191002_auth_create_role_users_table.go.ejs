@@ -7,21 +7,20 @@ import (
 	"gorm.io/gorm"
 )
 
-type RoleUser struct {
-	ID     string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
-	UserID string `gorm:"not null;column:user_id;type:uuid;uniqueIndex:idx_role_user"`
-	RoleID string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_role_user"`
-	model.Timestamps
-}
-
 func CreateRoleUsersTable() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102191002_auth_create_role_users_table",
 		Migrate: func(tx *gorm.DB) error {
+			type RoleUser struct {
+				ID     string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
+				UserID string `gorm:"not null;column:user_id;type:uuid;uniqueIndex:idx_role_user"`
+				RoleID string `gorm:"not null;column:role_id;type:uuid;uniqueIndex:idx_role_user"`
+				model.Timestamps
+			}
+
 			var err error
 
-
-			if err = tx.AutoMigrate(&RoleUser{}); err != nil {
+			if err = tx.Table("role_users").AutoMigrate(&RoleUser{}); err != nil {
 				return err
 			}
 

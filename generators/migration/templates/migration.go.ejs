@@ -7,18 +7,16 @@ import (
 <%- include('import') %>
 )
 
-type <%= className %> struct {
-	ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
-	<%- include('print-props') %>
-	model.BaseTimestamps
-}
-
 func Create<%= pluralClassName %>Table() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
-
-			if err := tx.AutoMigrate(&<%= className %>{}); err != nil {
+			type <%= className %> struct {
+				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				<%- include('print-props') %>
+				model.BaseTimestamps
+			}
+			if err := tx.Table("<%= tableName %>").AutoMigrate(&<%= className %>{}); err != nil {
 				return err
 			}
 
