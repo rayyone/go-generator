@@ -21,88 +21,7 @@
       }
     },
     "app": {
-      "options": {
-        "help": {
-          "name": "help",
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage"
-        },
-        "appModName": {
-          "type": "String",
-          "description": "Your Golang Application module name",
-          "name": "appModName",
-          "hide": false
-        },
-        "docker": {
-          "type": "Boolean",
-          "description": "Include Dockerfile and .dockerignore",
-          "name": "docker",
-          "hide": false
-        },
-        "description": {
-          "type": "String",
-          "description": "Description for the application",
-          "name": "description",
-          "hide": false
-        },
-        "outdir": {
-          "type": "String",
-          "description": "Project root directory for the application",
-          "name": "outdir",
-          "hide": false
-        },
-        "eslint": {
-          "type": "Boolean",
-          "description": "Enable eslint",
-          "name": "eslint",
-          "hide": false
-        },
-        "prettier": {
-          "type": "Boolean",
-          "description": "Enable prettier",
-          "name": "prettier",
-          "hide": false
-        },
-        "mocha": {
-          "type": "Boolean",
-          "description": "Enable mocha",
-          "name": "mocha",
-          "hide": false
-        },
-        "vscode": {
-          "type": "Boolean",
-          "description": "Use preconfigured VSCode settings",
-          "name": "vscode",
-          "hide": false
-        },
-        "private": {
-          "type": "Boolean",
-          "description": "Mark the project private (excluded from npm publish)",
-          "name": "private",
-          "hide": false
-        },
-        "config": {
-          "type": "String",
-          "alias": "c",
-          "description": "JSON file name or value to configure options",
-          "name": "config",
-          "hide": false
-        },
-        "format": {
-          "type": "Boolean",
-          "description": "Format generated code using npm run lint:fix",
-          "name": "format",
-          "hide": false
-        },
-        "packageManager": {
-          "type": "String",
-          "description": "Change the default package manager",
-          "alias": "pm",
-          "name": "packageManager",
-          "hide": false
-        }
-      },
+      "options": {},
       "arguments": [
         {
           "type": "String",
@@ -113,49 +32,8 @@
       ],
       "name": "app"
     },
-    "controller": {
-      "options": {
-        "help": {
-          "name": "help",
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage"
-        },
-        "controllerType": {
-          "type": "String",
-          "required": false,
-          "description": "Type for the controller",
-          "name": "controllerType",
-          "hide": false
-        },
-        "config": {
-          "type": "String",
-          "alias": "c",
-          "description": "JSON file name or value to configure options",
-          "name": "config",
-          "hide": false
-        },
-        "yes": {
-          "type": "Boolean",
-          "alias": "y",
-          "description": "Skip all confirmation prompts with default or provided value",
-          "name": "yes",
-          "hide": false
-        },
-        "format": {
-          "type": "Boolean",
-          "description": "Format generated code using npm run lint:fix",
-          "name": "format",
-          "hide": false
-        },
-        "packageManager": {
-          "type": "String",
-          "description": "Change the default package manager",
-          "alias": "pm",
-          "name": "packageManager",
-          "hide": false
-        }
-      },
+    "ctl": {
+      "options": {},
       "arguments": [
         {
           "type": "String",
@@ -164,58 +42,10 @@
           "name": "name"
         }
       ],
-      "name": "controller"
+      "name": "ctl"
     },
     "model": {
-      "options": {
-        "help": {
-          "name": "help",
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage"
-        },
-        "base": {
-          "type": "String",
-          "required": false,
-          "description": "A valid based model",
-          "name": "base",
-          "hide": false
-        },
-        "table": {
-          "type": "String",
-          "required": false,
-          "description": "If discovering a model from a dataSource, specify the name of its table/view",
-          "name": "table",
-          "hide": false
-        },
-        "config": {
-          "type": "String",
-          "alias": "c",
-          "description": "JSON file name or value to configure options",
-          "name": "config",
-          "hide": false
-        },
-        "yes": {
-          "type": "Boolean",
-          "alias": "y",
-          "description": "Skip all confirmation prompts with default or provided value",
-          "name": "yes",
-          "hide": false
-        },
-        "format": {
-          "type": "Boolean",
-          "description": "Format generated code using npm run lint:fix",
-          "name": "format",
-          "hide": false
-        },
-        "packageManager": {
-          "type": "String",
-          "description": "Change the default package manager",
-          "alias": "pm",
-          "name": "packageManager",
-          "hide": false
-        }
-      },
+      "options": {},
       "arguments": [
         {
           "type": "String",
@@ -226,64 +56,8 @@
       ],
       "name": "model"
     },
-    "repository": {
-      "options": {
-        "help": {
-          "name": "help",
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage"
-        },
-        "model": {
-          "type": "String",
-          "required": false,
-          "description": "A valid model name",
-          "name": "model",
-          "hide": false
-        },
-        "id": {
-          "type": "String",
-          "required": false,
-          "description": "A valid ID property name for the specified model",
-          "name": "id",
-          "hide": false
-        },
-        "repositoryBaseClass": {
-          "type": "String",
-          "required": false,
-          "description": "A valid repository base class",
-          "default": "DefaultCrudRepository",
-          "name": "repositoryBaseClass",
-          "hide": false
-        },
-        "config": {
-          "type": "String",
-          "alias": "c",
-          "description": "JSON file name or value to configure options",
-          "name": "config",
-          "hide": false
-        },
-        "yes": {
-          "type": "Boolean",
-          "alias": "y",
-          "description": "Skip all confirmation prompts with default or provided value",
-          "name": "yes",
-          "hide": false
-        },
-        "format": {
-          "type": "Boolean",
-          "description": "Format generated code using npm run lint:fix",
-          "name": "format",
-          "hide": false
-        },
-        "packageManager": {
-          "type": "String",
-          "description": "Change the default package manager",
-          "alias": "pm",
-          "name": "packageManager",
-          "hide": false
-        }
-      },
+    "repo": {
+      "options": {},
       "arguments": [
         {
           "type": "String",
@@ -292,51 +66,10 @@
           "name": "name"
         }
       ],
-      "name": "repository"
+      "name": "repo"
     },
     "service": {
-      "options": {
-        "help": {
-          "name": "help",
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage"
-        },
-        "type": {
-          "type": "String",
-          "required": false,
-          "description": "Service type - proxy, class or provider",
-          "name": "type",
-          "hide": false
-        },
-        "config": {
-          "type": "String",
-          "alias": "c",
-          "description": "JSON file name or value to configure options",
-          "name": "config",
-          "hide": false
-        },
-        "yes": {
-          "type": "Boolean",
-          "alias": "y",
-          "description": "Skip all confirmation prompts with default or provided value",
-          "name": "yes",
-          "hide": false
-        },
-        "format": {
-          "type": "Boolean",
-          "description": "Format generated code using npm run lint:fix",
-          "name": "format",
-          "hide": false
-        },
-        "packageManager": {
-          "type": "String",
-          "description": "Change the default package manager",
-          "alias": "pm",
-          "name": "packageManager",
-          "hide": false
-        }
-      },
+      "options": {},
       "arguments": [
         {
           "type": "String",
@@ -347,55 +80,77 @@
       ],
       "name": "service"
     },
-    "copyright": {
-      "options": {
-        "help": {
-          "type": "Boolean",
-          "alias": "h",
-          "description": "Print the generator's options and usage",
-          "name": "help",
-          "hide": false
-        },
-        "owner": {
+    "resource": {
+      "options": {},
+      "arguments": [
+        {
           "type": "String",
           "required": false,
-          "description": "Copyright owner",
-          "name": "owner",
-          "hide": false
-        },
-        "license": {
-          "type": "String",
-          "required": false,
-          "description": "License",
-          "name": "license",
-          "hide": false
-        },
-        "updateLicense": {
-          "type": "Boolean",
-          "required": false,
-          "description": "Update license in package.json and LICENSE",
-          "name": "updateLicense",
-          "hide": false
-        },
-        "gitOnly": {
-          "type": "Boolean",
-          "required": false,
-          "default": true,
-          "description": "Only update git tracked files",
-          "name": "gitOnly",
-          "hide": false
-        },
-        "exclude": {
-          "type": "String",
-          "required": false,
-          "default": "",
-          "description": "Exclude files that match the pattern",
-          "name": "exclude",
-          "hide": false
+          "description": "Name for the resource",
+          "name": "name"
         }
-      },
-      "arguments": [],
-      "name": "copyright"
+      ],
+      "name": "resource"
+    },
+    "route": {
+      "options": {},
+      "arguments": [
+        {
+          "type": "String",
+          "required": false,
+          "description": "Name for the route",
+          "name": "name"
+        }
+      ],
+      "name": "route"
+    },
+    "tfm": {
+      "options": {},
+      "arguments": [
+        {
+          "type": "String",
+          "required": false,
+          "description": "Name for the transformer",
+          "name": "name"
+        }
+      ],
+      "name": "tfm"
+    },
+    "request": {
+      "options": {},
+      "arguments": [
+        {
+          "type": "String",
+          "required": false,
+          "description": "Name for the request",
+          "name": "name"
+        }
+      ],
+      "name": "request"
+    },
+    "migration": {
+      "options": {},
+      "arguments": [
+        {
+          "type": "String",
+          "required": false,
+          "description": "Name for the migration",
+          "name": "name"
+        }
+      ],
+      "name": "migration"
+    },
+    "new-prop": {
+      "options": {},
+      "arguments": [
+        {
+          "type": "String",
+          "required": false,
+          "description": "Name for the new-prop",
+          "name": "name"
+        }
+      ],
+      "name": "new-prop"
     }
   }
 }
