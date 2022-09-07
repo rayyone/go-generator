@@ -52,6 +52,7 @@ module.exports = class ResourceGenerator extends ArtifactGenerator {
   }
 
   async end() {
+    this.classOpts.hideHintWhenDone = true;
     this.composeWith(path.join(__dirname, '../request'), [
       this.artifactInfo.name,
       this.artifactInfo.domainName,

@@ -88,7 +88,7 @@ module.exports = class GoRouteGenerator extends ArtifactGenerator {
 
     debug('scaffolding');
 
-    this.artifactInfo.outFile = helpers.getRouteFileName(this.artifactInfo.className);
+    this.artifactInfo.outFile = helpers.getRouteFileName();
 
     // Resolved Output Path
     const outputPath = this.destinationPath(this.artifactInfo.outDir, this.artifactInfo.outFile);

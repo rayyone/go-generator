@@ -8,7 +8,7 @@ type NewUser struct {
 	Email          string  `json:"email" form:"email" binding:"required,email"`
 	Name           *string `json:"name" form:"name"`
 	ProfilePicture *string `json:"profile_picture" form:"profile_picture"`
-	IsVerified     *bool    `json:"is_verified" form:"is_verified"`
+	IsVerified     *bool   `json:"is_verified" form:"is_verified"`
 	// {{ry_placeholder:new_props}}
 }
 
@@ -23,7 +23,7 @@ type UpdateUser struct {
 
 type NewUserByAdmin struct {
 	NewUser
-    Password *string   `json:'password' form:"password"`
+	Password *string   `json:'password' form:"password"`
 	RoleIDs  *[]string `json:"role_ids" form:"role_ids[]"`
 }
 

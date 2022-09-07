@@ -1,12 +1,9 @@
-<% var propArr = Object.values(properties) %>
-<% for (var l = propArr.length, i = 0; i < l; i++) { %>
-	<% var prop = propArr[i] %>
-	<% if (prop.orgType === 'time.Time') { -%>
-	"time"
-		<% break -%>
-	<% } %>
-	<% if (prop.goType === '[]string' || prop.goType === '[]*string') { -%>
-	"github.com/lib/pq"
-		<% break -%>
-	<% } %>
-<% } %>
+<% var propArr = Object.values(properties) -%>
+<% for (var l = propArr.length, i = 0; i < l; i++) { -%>
+	<% var prop = propArr[i] -%>
+	<% var package = listPackageImport[prop.orgType] -%>
+	<% if (package) { -%>
+		"<%=package%>"
+	<% } -%>
+	<% listPackageImport[prop.orgType] = null -%>
+<% } -%>

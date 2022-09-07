@@ -1,5 +1,8 @@
 package request
 
+import (
+)
+
 type NewPermission struct {
 	Action      string  `json:"action" form:"action" binding:"required"`
 	Description *string `json:"description" form:"description" binding:""`

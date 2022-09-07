@@ -26,6 +26,7 @@ const {
   getModelSchemeFileName,
 } = require('../helpers');
 const {generateNewProps} = require('../gen-config/templates/converter');
+const helpers = require("../helpers");
 
 const MODEL_TEMPLATE_PATH = 'model.go.ejs';
 
@@ -48,6 +49,8 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
     this.artifactInfo.properties = {};
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, modelDir);
+
+    this.artifactInfo.listPackageImport = helpers.getListPackage();
 
     return super._setupGenerator();
   }
@@ -168,7 +171,7 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
         },
         {
           name: 'nullable',
-          message: g.f('Is it nullable?:'),
+          message: g.f('Is it not null?:'),
           type: 'confirm',
           default: true,
         },
