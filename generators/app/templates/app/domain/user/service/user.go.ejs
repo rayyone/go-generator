@@ -1,7 +1,6 @@
 package usersvc
 
 import (
-	"github.com/rayyone/go-core/helpers/method"
 	"github.com/rayyone/go-core/helpers/pagination"
 	"github.com/rayyone/go-core/helpers/str"
 	"github.com/rayyone/go-core/ryerr"
@@ -66,13 +65,16 @@ func (s *UserSvc) Find(r *container.Request, userID string) (*model.User, error)
 func (s *UserSvc) Store(r *container.Request, params *request.NewUserByAdmin) (*model.User, error) {
 	var user model.User
 	var err error
-	if params.Password != nil {
-		params.Password = method.Ptr(str.Hash(*params.Password))
-	}
+
 	err = helpers.BindData(&user.UserTbl, params)
 	if err != nil {
 		return nil, err
 	}
+	hashedPassword := str.Hash(params.Password)
+	user.Password = &hashedPassword
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
 	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
 		return nil, err
 	}
@@ -86,6 +88,9 @@ func (s *UserSvc) Store(r *container.Request, params *request.NewUserByAdmin) (*
 				return nil, ryerr.Msg(err, "Cannot assign roles to user")
 			}
 		}
+	}
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
 	}
 
 	var refreshUser model.User
@@ -137,6 +142,11 @@ func (s *UserSvc) UpdateByAdmin(r *container.Request, userID string, params requ
 	err = helpers.BindData(&user.UserTbl, params)
 	if err != nil {
 		return nil, err
+	}
+
+	if params.Password != nil {
+		hashedPassword := str.Hash(*params.Password)
+		user.Password = &hashedPassword
 	}
 	if _, err := s.Repo.User.Save(r.Request, &user.UserTbl); err != nil {
 		return nil, ryerr.Msg(err, "Cannot update user")

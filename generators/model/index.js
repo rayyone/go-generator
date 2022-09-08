@@ -180,6 +180,10 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
           message: g.f('Is it filterable?:'),
           type: 'confirm',
           default: true,
+          when: answers => {
+            return "datatypes.JSON" !== answers.type
+                && "array" !== answers.type
+          },
         },
         {
           name: 'filterType',
