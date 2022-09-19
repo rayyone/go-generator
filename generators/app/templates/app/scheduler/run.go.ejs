@@ -1,23 +1,26 @@
 package scheduler
 
 import (
-	"fmt"
-	"github.com/jasonlvhit/gocron"
+	"github.com/go-co-op/gocron"
+	"github.com/rayyone/go-core/ryerr"
 	"<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/foundation/service/container"
 	"<%= appModName %>/config"
+	"time"
 )
 
 func RunCron(serviceProvider *containersvc.Service) {
 	r := container.InitRequest(nil)
-	conf := config.All()
-	fmt.Printf("%+v\n", r)
-	if conf.App.EnableCron {
-		//gocron.Every(1).Hours().
-		//	Do(crons.DoSomething, r, serviceProvider)
-		//gocron.Every(1).Monday().At("18:30").
-		//	Do(crons.DoAnotherThings, r, serviceProvider)
-	}
+	ictZone := time.FixedZone("ICT", 7*3600)
+	scheduler := gocron.NewScheduler(ictZone)
 
-	<-gocron.Start()
-}
+	conf := config.All()
+
+	if conf.App.EnableCron {
+		_, err := scheduler.Every(1).Day().At("9:00").Do(crons.DoSomething, r, serviceProvider)
+		if err != nil {
+			_ = ryerr.Newf("Send report error!: %s", err)
+		}
+
+		scheduler.StartAsync()
+	}
