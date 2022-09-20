@@ -171,15 +171,16 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
         },
         {
           name: 'nullable',
-          message: g.f('Is it not null?:'),
+          message: g.f('Is it nullable?:'),
           type: 'confirm',
-          default: true,
+          default: answers => {
+            return !answers.required
+          },
         },
         {
           name: 'filterable',
           message: g.f('Is it filterable?:'),
           type: 'confirm',
-          default: true,
           when: answers => {
             return "datatypes.JSON" !== answers.type
                 && "array" !== answers.type

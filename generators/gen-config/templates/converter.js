@@ -28,7 +28,7 @@ exports.generateNewProps = properties => {
       goType: propVal.goType,
       isRequired: propVal.required,
       isNullable: propVal.nullable,
-      filterable: propVal.filterable,
+      filterable: propVal.filterable || false,
       filterType: propVal.filterType,
     });
   });
