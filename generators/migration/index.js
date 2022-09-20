@@ -37,6 +37,8 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
 
     this.artifactInfo.getGormType = getGormType;
 
+    this.artifactInfo.listPackageImport = helpers.getListPackage();
+
     return super._setupGenerator();
   }
 

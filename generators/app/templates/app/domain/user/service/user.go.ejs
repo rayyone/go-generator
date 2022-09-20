@@ -70,6 +70,11 @@ func (s *UserSvc) Store(r *container.Request, params *request.NewUserByAdmin) (*
 	if err != nil {
 		return nil, err
 	}
+	hashedPassword := str.Hash(params.Password)
+	user.Password = &hashedPassword
+
+	r.DBM.BeginTransaction()
+	defer r.DBM.Rollback()
 	if _, err := s.Repo.User.Save(r, &user.UserTbl); err != nil {
 		return nil, err
 	}
@@ -83,6 +88,9 @@ func (s *UserSvc) Store(r *container.Request, params *request.NewUserByAdmin) (*
 				return nil, ryerr.Msg(err, "Cannot assign roles to user")
 			}
 		}
+	}
+	if err := r.DBM.Commit(); err != nil {
+		return nil, ryerr.Msg(err, "Unknown error. Please try again")
 	}
 
 	var refreshUser model.User
@@ -134,6 +142,11 @@ func (s *UserSvc) UpdateByAdmin(r *container.Request, userID string, params requ
 	err = helpers.BindData(&user.UserTbl, params)
 	if err != nil {
 		return nil, err
+	}
+
+	if params.Password != nil {
+		hashedPassword := str.Hash(*params.Password)
+		user.Password = &hashedPassword
 	}
 	if _, err := s.Repo.User.Save(r.Request, &user.UserTbl); err != nil {
 		return nil, ryerr.Msg(err, "Cannot update user")

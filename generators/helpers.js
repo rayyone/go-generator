@@ -61,23 +61,44 @@ exports.newRepoBindPlaceholder = exports.getPlaceholder('repo_bind');
 exports.newRoutePlaceholder = exports.getPlaceholder('new_route_resources');
 exports.newRouteImportPlaceholder = exports.getPlaceholder('new_route_resources_import');
 
-exports.golangTypeChoices = ['string', 'uuid', 'bool', 'int', 'int64', 'time.Time', 'postgres.Jsonb', 'array'];
+exports.golangTypeChoices = ['string', 'text', 'uuid', 'bool', 'int', 'int64', 'time.Time', 'datatypes.JSON', 'array'];
 
 exports.dbFilterChoices = ['=', 'ilike', 'like', 'range'];
 
+exports.getListPackage = function () {
+  return _.cloneDeep({
+    'time.Time': 'time',
+    'datatypes.JSON': "gorm.io/datatypes",
+    '[]string': 'github.com/lib/pq',
+    '[]*string': 'github.com/lib/pq'
+  })
+}
+
+exports.convertToGoLangType = gormType => {
+  const orgType = gormType.replace(/\*/g, '');
+  switch (orgType) {
+    case 'text':
+      return 'string';
+    default:
+      return orgType;
+  }
+}
 exports.getGormType = golangType => {
   const orgType = golangType.replace(/\*/g, '');
   switch (orgType) {
     case 'string':
       return 'varchar(255)';
+    case 'text':
+      return 'text';
     case 'bool':
       return 'boolean';
     case 'time.Time':
       return 'timestamp with time zone';
     case 'int':
-    case 'int64':
       return 'integer';
-    case 'postgres.Jsonb':
+    case 'int64':
+      return 'bigint';
+    case 'datatypes.JSON':
       return 'jsonb';
     default:
       return 'varchar(255)';
@@ -99,7 +120,7 @@ exports.getTransformerFileName = function (className) {
   return `${toFileName(className)}.go`;
 };
 
-exports.getRouteFileName = function (className) {
+exports.getRouteFileName = function () {
   return `v1.go`;
 };
 
@@ -140,7 +161,7 @@ exports.findArtifactPaths = async function (dir, artifactType, reader) {
   }
 };
 
-exports.fileExists = async path => !!(await fs.promises.stat(path).catch(e => false));
+exports.fileExists = async path => !!(await fs.promises.stat(path).catch(() => false));
 
 exports.getDomainList = async function (dir, artifactType, addSuffix, reader) {
   const paths = await exports.findArtifactPaths(dir, artifactType, reader);

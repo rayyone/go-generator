@@ -34,6 +34,7 @@ module.exports = class RequestGenerator extends ArtifactGenerator {
     this.artifactInfo.requestDir = path.resolve(this.artifactInfo.rootDir, helpers.requestDir);
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
+    this.artifactInfo.listPackageImport = helpers.getListPackage();
 
     return super._setupGenerator();
   }
@@ -81,7 +82,6 @@ module.exports = class RequestGenerator extends ArtifactGenerator {
 
   async end() {
     await super.end();
-
     if (this.classOpts.hideHintWhenDone) {
       return;
     }

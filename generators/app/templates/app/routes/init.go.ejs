@@ -62,6 +62,7 @@ func setUpSwagger(router *gin.Engine) {
 			DefaultModelsExpandDepth: 0,
 			InstanceName:             swag.Name,
 			Title:                    "<%= appModName %>",
+			PersistAuthorization:     true,
 		}, swaggerFiles.Handler)(context)
 	})
 }

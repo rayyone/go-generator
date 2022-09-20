@@ -22,7 +22,9 @@ type UpdateUser struct {
 
 type NewUserByAdmin struct {
 	NewUser
-	RoleIDs *[]string `json:"role_ids" form:"role_ids[]"`
+	IsVerified *bool     `json:"is_verified" form:"is_verified"`
+	Password   string    `json:"password" form:"password" binding:"required,min=6"`
+	RoleIDs    *[]string `json:"role_ids" form:"role_ids[]"`
 }
 
 type UpdateMyDetail struct {
@@ -32,7 +34,9 @@ type UpdateMyDetail struct {
 
 type UpdateByAdmin struct {
 	UpdateMyDetail
-	Active  *bool     `json:"active" form:"active"`
-	Email   *string   `json:"email" form:"email" binding:"omitempty,email"`
-	RoleIDs *[]string `json:"role_ids" form:"role_ids[]"`
+	Password   *string  `json:"password" form:"password" binding:"omitempty,min=6"`
+	IsVerified *bool  `json:"is_verified" form:"is_verified"`
+	Active     *bool     `json:"active" form:"active"`
+	Email      *string   `json:"email" form:"email" binding:"omitempty,email"`
+	RoleIDs    *[]string `json:"role_ids" form:"role_ids[]"`
 }

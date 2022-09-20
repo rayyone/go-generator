@@ -1,6 +1,8 @@
 package request
 
-import "time"
+import (
+	"time"
+)
 
 type NewAccessToken struct {
 	UserID         string     `json:"user_id" form:"user_id" binding:"required"`

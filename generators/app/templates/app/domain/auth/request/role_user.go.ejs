@@ -1,5 +1,8 @@
 package request
 
+import (
+)
+
 type NewRoleUser struct {
 	UserID string `json:"user_id" form:"user_id" binding:"required"`
 	RoleID string `json:"role_id" form:"role_id" binding:"required"`

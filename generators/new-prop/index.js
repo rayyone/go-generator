@@ -29,6 +29,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
       type: 'newProp',
       rootDir: helpers.sourceRootDir,
       databaseRootDir: helpers.databaseRootDir,
+      listPackageImport: helpers.getListPackage(),
     };
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
@@ -83,7 +84,6 @@ module.exports = class NewPropGenerator extends ModelGenerator {
 
   async scaffold() {
     if (this.shouldExit()) return false;
-
     debug('scaffolding');
     this.artifactInfo.modelScheme = {props: this.artifactInfo.newProps};
     const updateFiles = [
@@ -93,6 +93,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
           helpers.getModelFileName(this.artifactInfo.modelBaseClass),
         ),
         tplPath: path.resolve(__dirname, `../model/templates/print-props-tbl.ejs`),
+        addImport: true,
       },
       {
         path: this.destinationPath(
@@ -100,6 +101,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
           helpers.getModelSchemeFileName(this.artifactInfo.name),
         ),
         tplPath: path.resolve(__dirname, `../${configDir}/templates/print-props.ejs`),
+        addImport: false,
       },
       {
         path: this.destinationPath(
@@ -107,6 +109,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
           helpers.getRequestFileName(this.artifactInfo.name),
         ),
         tplPath: path.resolve(__dirname, `../request/templates/print-props.ejs`),
+        addImport: true,
       },
       {
         path: this.destinationPath(
@@ -114,14 +117,17 @@ module.exports = class NewPropGenerator extends ModelGenerator {
           helpers.getRepositoryFileName(this.artifactInfo.name),
         ),
         tplPath: path.resolve(__dirname, `../repository/templates/print-props.ejs`),
+        addImport: false,
       },
     ];
     this.outFiles = [];
     for (const updateFile of updateFiles) {
       this.outFiles.push(updateFile.path);
       await super._replacePlaceholderToFiles(updateFile.path, updateFile.tplPath, newPropsPlaceholder);
+      if (updateFile.addImport) {
+        await this._addNewPackage(updateFile.path, this.artifactInfo.modelScheme.props);
+      }
     }
-
     this.artifactInfo.migrationOutFile = helpers.getMigrationFileName(this.artifactInfo.migrationID);
     const migrationOutputPath = this.destinationPath(
       this.artifactInfo.migrationOutDir,

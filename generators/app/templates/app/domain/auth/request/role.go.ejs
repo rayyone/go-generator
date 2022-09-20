@@ -1,5 +1,8 @@
 package request
 
+import (
+)
+
 type NewRole struct {
 	Name          string   `json:"name" form:"name" binding:"required"`
 	PermissionIds []string `json:"permission_ids" form:"permission_ids" binding:""`
