@@ -13,25 +13,47 @@ type BaseGormRepository struct {
 	*corerepo.CoreGormRepository
 }
 
-func GetOrderBy(urlParams map[string]string, modelObj model.Model, defOrder string) string {
-	tableName := model.GetTableName(modelObj)
+func concatOrderQuery(tableName string, statement string, idx int) string {
+	if tableName != "" {
+		if idx == 0 {
+			return tableName + "." + statement
+		} else {
+			return ", " + tableName + "." + statement
+		}
+	}
+	if idx == 0 {
+		return statement
+	} else {
+		return ", " + statement
+	}
+}
+func parseOrderBy(urlParams map[string]string, defOrder string, tableName string) string {
 	if urlParams["order_by"] != "" {
-		orderBy := strings.Split(urlParams["order_by"], ",")
-		return tableName + "." + orderBy[0] + " " + orderBy[1]
+		orderFields := strings.Split(urlParams["order_by"], ";")
+		orderQuery := ""
+		for i, field := range orderFields {
+			orderBy := strings.Split(field, ",")
+			orderQuery += concatOrderQuery(tableName, orderBy[0]+" "+orderBy[1], i)
+		}
+		return orderQuery
 	}
 
 	orderFields := strings.Split(defOrder, ",")
 	orderQuery := ""
 	for i, field := range orderFields {
-		if i == 0 {
-			orderQuery += tableName + "." + strings.TrimSpace(field)
-		} else {
-			orderQuery += ", " + tableName + "." + strings.TrimSpace(field)
-		}
+		orderQuery += concatOrderQuery(tableName, strings.TrimSpace(field), i)
 	}
 	return orderQuery
 }
 
+func GetLooseOrderBy(urlParams map[string]string, defOrder string) string {
+	return parseOrderBy(urlParams, defOrder, "")
+}
+
+func GetOrderBy(urlParams map[string]string, modelObj model.Model, defOrder string) string {
+	tableName := model.GetTableName(modelObj)
+	return parseOrderBy(urlParams, defOrder, tableName)
+}
 
 func NewBaseGormRepository() *BaseGormRepository {
 	conf := config.All()
