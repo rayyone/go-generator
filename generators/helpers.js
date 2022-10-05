@@ -68,11 +68,11 @@ exports.dbFilterChoices = ['=', 'ilike', 'like', 'range'];
 exports.getListPackage = function () {
   return _.cloneDeep({
     'time.Time': 'time',
-    'datatypes.JSON': "gorm.io/datatypes",
+    'datatypes.JSON': 'gorm.io/datatypes',
     '[]string': 'github.com/lib/pq',
-    '[]*string': 'github.com/lib/pq'
-  })
-}
+    '[]*string': 'github.com/lib/pq',
+  });
+};
 
 exports.convertToGoLangType = gormType => {
   const orgType = gormType.replace(/\*/g, '');
@@ -80,9 +80,10 @@ exports.convertToGoLangType = gormType => {
     case 'text':
       return 'string';
     default:
-      return orgType;
+      return gormType;
   }
-}
+};
+
 exports.getGormType = golangType => {
   const orgType = golangType.replace(/\*/g, '');
   switch (orgType) {
