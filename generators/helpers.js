@@ -88,7 +88,7 @@ exports.getGormType = golangType => {
   const orgType = golangType.replace(/\*/g, '');
   switch (orgType) {
     case 'string':
-      return 'varchar(255)';
+      return 'varchar(1000)';
     case 'text':
       return 'text';
     case 'bool':
@@ -102,7 +102,7 @@ exports.getGormType = golangType => {
     case 'datatypes.JSON':
       return 'jsonb';
     default:
-      return 'varchar(255)';
+      return 'varchar(1000)';
   }
 };
 
