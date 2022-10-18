@@ -9,7 +9,11 @@ import (
 type <%= className %>Tbl struct {
 	ID          string  `json:"id"`
 <%- include('print-props-tbl') %>
+<% if (softDeletes) { -%>
 	BaseTimestamps
+<% } else { -%>
+	Timestamps
+<% } -%>
 }
 
 type <%= className %> struct {

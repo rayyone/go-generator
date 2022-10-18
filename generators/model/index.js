@@ -47,11 +47,12 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
     this.artifactInfo.modelSchemeOutDir = path.resolve(this.destinationPath(), ryConfigDir, ryConfigModelDir);
 
     this.artifactInfo.properties = {};
+    this.artifactInfo.softDeletes = false;
+
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, modelDir);
 
     this.artifactInfo.listPackageImport = helpers.getListPackage();
-
     return super._setupGenerator();
   }
 
@@ -98,7 +99,6 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
 
   async promptPropertyName() {
     if (this.shouldExit()) return false;
-
     this.log(g.f('Enter an empty property name when done'));
     this.log(g.f('Input the same property name to override a previous one'));
     this.log();
@@ -106,7 +106,6 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
     // This function can be called repeatedly so this deletes the previous
     // property name if one was set.
     delete this.propName;
-
     const prompts = [
       {
         name: 'propName',
@@ -207,7 +206,21 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
       return this.promptPropertyName();
     }
   }
+  async promptAddSoftDelete() {
+    if (this.shouldExit()) return false;
 
+    const prompts = [
+      {
+        name: 'softDeletes',
+        message: g.f('Model has soft-delete?'),
+        type: 'confirm',
+        default: true,
+      },
+    ];
+
+    const answers = await this.prompt(prompts);
+    this.artifactInfo.softDeletes = answers.softDeletes
+  }
   async scaffold() {
     if (this.shouldExit()) return false;
 

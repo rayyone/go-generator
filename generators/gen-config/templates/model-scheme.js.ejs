@@ -1,6 +1,7 @@
 <%# @IMPORTANT: Need to be synced with the ./converter.js:generateNewProps() !!  %>
 const <%= camelName %> = {
   domain: '<%= domainName %>',
+  softDeletes: <%= softDeletes %>,
   props: [
 <%- include('print-props') %>
   ],
