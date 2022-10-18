@@ -11,7 +11,7 @@ const debug = require('../../lib/debug')('new-prop-generator');
 const path = require('path');
 const helpers = require('../helpers');
 const ModelGenerator = require('../model');
-const {newPropsPlaceholder, configDir, getGormType, format2Digit} = require('../helpers');
+const {newPropsPlaceholder, configDir, getGormType, format2Digit, toGolangClassName} = require('../helpers');
 const {toFileName} = require('../../lib/utils');
 const g = require('../../lib/globalize');
 const CUSTOM_CHOICE_VALUE = 'RyCustomNewProp';
@@ -77,6 +77,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
     const hour = format2Digit(now.getHours());
     const minute = format2Digit(now.getMinutes());
     const fullDatetime = [year, month, day, hour, minute].join('');
+    this.artifactInfo.columnNames = toGolangClassName(newColsStr)
     this.artifactInfo.migrationID = `${fullDatetime}_${
       this.artifactInfo.domainPkgName
     }_add_${newColsStr}_to_${toFileName(this.artifactInfo.name)}`;
