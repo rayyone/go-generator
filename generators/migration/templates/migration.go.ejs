@@ -14,7 +14,12 @@ func Create<%= pluralClassName %>Table() *gormigrate.Migration {
 			type <%= className %> struct {
 				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
 				<%- include('print-props') %>
-				model.BaseTimestamps
+
+				<% if (modelScheme.softDeletes) { -%>
+					model.BaseTimestamps
+				<% } else { -%>
+					model.Timestamps
+				<% } -%>
 			}
 			if err := tx.Table("<%= tableName %>").AutoMigrate(&<%= className %>{}); err != nil {
 				return err
