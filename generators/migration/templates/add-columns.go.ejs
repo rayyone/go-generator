@@ -6,7 +6,7 @@ import (
 <%- include('import') %>
 )
 
-func AddNewColumnsTo<%= pluralClassName %>Table() *gormigrate.Migration {
+func AddColumns<%= columnNames %>To<%= pluralClassName %>Table() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
