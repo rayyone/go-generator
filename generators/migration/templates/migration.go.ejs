@@ -12,7 +12,7 @@ func Create<%= pluralClassName %>Table() *gormigrate.Migration {
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
 			type <%= className %> struct {
-				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false;default:gen_random_uuid()"`
 				<%- include('print-props') %>
 
 				<% if (modelScheme.softDeletes) { -%>
