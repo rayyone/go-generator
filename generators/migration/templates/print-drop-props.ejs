@@ -1,0 +1,5 @@
+<% modelScheme && modelScheme.props.forEach((prop) => { -%>
+	tx.Table("<%= tableName %>").Migrator().DropColumn(&<%= className %>{}, "<%= prop.propKey %>"); err != nil {
+		return err
+	}
+<% }) -%>

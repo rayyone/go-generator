@@ -7,12 +7,12 @@ import (
 )
 
 func AddColumns<%= columnNames %>To<%= pluralClassName %>Table() *gormigrate.Migration {
+	type <%= className %> struct {
+		<%- include('print-props') %>
+	}
 	return &gormigrate.Migration{
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
-			type <%= className %> struct {
-				<%- include('print-props') %>
-			}
 			if err := tx.Table("<%= tableName %>").AutoMigrate(&<%= className %>{}); err != nil {
 				return err
 			}
@@ -21,6 +21,7 @@ func AddColumns<%= columnNames %>To<%= pluralClassName %>Table() *gormigrate.Mig
 		},
 
 		Rollback: func(tx *gorm.DB) error {
+			<%- include('print-drop-props') %>
 			return nil
 		},
 	}
