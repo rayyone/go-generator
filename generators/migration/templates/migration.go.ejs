@@ -3,7 +3,6 @@ package migration
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
-	"<%= appModName %>/app/model"
 <%- include('import') -%>
 )
 
@@ -12,13 +11,12 @@ func Create<%= pluralClassName %>Table() *gormigrate.Migration {
 		ID: "<%= migrationID %>",
 		Migrate: func(tx *gorm.DB) error {
 			type <%= className %> struct {
-				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false;default:gen_random_uuid()"`
 				<%- include('print-props') %>
-
+					CreatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
+					UpdatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
 				<% if (modelScheme.softDeletes) { -%>
-					model.BaseTimestamps
-				<% } else { -%>
-					model.Timestamps
+					DeletedAt *gorm.DeletedAt `sql:"index" gorm:"type:timestamp with time zone;"`
 				<% } -%>
 			}
 			if err := tx.Table("<%= tableName %>").AutoMigrate(&<%= className %>{}); err != nil {
