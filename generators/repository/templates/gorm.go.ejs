@@ -45,12 +45,13 @@ func (g *<%= className %>Gorm) All(r *container.Request) ([]*model.<%= className
 <%- include('print-props') %>
 
 	tx.Model(&model.<%= className %>{}).Count(&total)
-
-	tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, &model.<%= className %>{}, "created_at DESC"))
-	err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
-	if err != nil {
-		return nil, nil, ryerr.New(err.Error())
-	}
+    if total > 0 {
+        tx = tx.Order(baserepo.GetOrderBy(r.UrlParams.Str, &model.<%= className %>{}, "created_at DESC"))
+        err := tx.Offset(r.Pagination.Offset).Limit(r.Pagination.Limit).Find(&res).Error
+        if err != nil {
+            return nil, nil, ryerr.New(err.Error())
+        }
+    }
 	paginator := pagination.BuildPaginator(total, r.Pagination.Limit, r.Pagination.Offset)
 	return res, paginator, err
 }
