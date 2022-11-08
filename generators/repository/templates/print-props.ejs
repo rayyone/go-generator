@@ -3,7 +3,14 @@
 		if r.UrlParams.Str["<%= prop.propKey %>"] != "" {
 		<% if (prop.filterType === '=')  { -%>
 			queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
+			<% if (prop.orgType === 'bool' || prop.orgType === '*bool')  { -%>
+			boolValue, err := strconv.ParseBool(queryStr)
+			if err != nil {
+				tx = tx.Where("<%= tableName %>.<%= prop.propKey %> = ?", boolValue)
+			}
+			<% } else { -%>
 			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> = ?", queryStr)
+			<% } -%>
 		<% } else if (prop.filterType === 'like' || prop.filterType === 'ilike') { -%>
 			queryStr := "%" + r.UrlParams.Str["<%= prop.propKey %>"] + "%"
 			tx = tx.Where("<%= tableName %>.<%= prop.propKey %> <%= prop.filterType %> ?", queryStr)
