@@ -5,7 +5,7 @@
 			queryStr := r.UrlParams.Str["<%= prop.propKey %>"]
 			<% if (prop.orgType === 'bool' || prop.orgType === '*bool')  { -%>
 			boolValue, err := strconv.ParseBool(queryStr)
-			if err != nil {
+			if err == nil {
 				tx = tx.Where("<%= tableName %>.<%= prop.propKey %> = ?", boolValue)
 			}
 			<% } else { -%>
