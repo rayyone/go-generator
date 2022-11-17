@@ -58,9 +58,12 @@ storage:
 
 mail:
   default: "smtp"
-  smtp:
-    host: "smtp.gmail.com"
-    port: 587
-    email: "support@rayyone.com"
-    password: ""
+  from:
+    address: "operations@rayyone.com"
     name: "Rayyone Support"
+  mailers:
+    smtp:
+      host: "smtp.gmail.com"
+      port: 587
+      user: "hello@rayyone.com"
+      password: ""

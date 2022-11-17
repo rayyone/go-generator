@@ -5,6 +5,7 @@ import (
 	"github.com/rayyone/go-core/ryerr"
 	"<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/foundation/service/container"
+	"<%= appModName %>/app/scheduler/crons"
 	"<%= appModName %>/config"
 	"time"
 )
@@ -24,3 +25,4 @@ func RunCron(serviceProvider *containersvc.Service) {
 
 		scheduler.StartAsync()
 	}
+}
