@@ -1,0 +1,35 @@
+package fileRoute
+
+import (
+	"github.com/gin-gonic/gin"
+	containerctl "<%= appModName %>/app/foundation/controller/container"
+	"<%= appModName %>/app/foundation/middleware"
+)
+
+type FileRoute struct {
+	routeGroup *gin.RouterGroup
+}
+
+func (p *FileRoute) Routes(ctl *containerctl.Controller) {
+	// Public routes
+	_ = p.routeGroup.Group("")
+
+	// Private routes
+	pvGroup := p.routeGroup.Group("")
+	middleware.ProtectRoutes(pvGroup, ctl.User.Service)
+
+	{
+		pvGroup.GET("file_uploads", ctl.FileUpload.All)
+		pvGroup.GET("file_uploads/:fileUploadID", ctl.FileUpload.GetByID)
+		pvGroup.POST("file_uploads", ctl.FileUpload.Store)
+		pvGroup.DELETE("file_uploads/:fileUploadID", ctl.FileUpload.Delete)
+	}
+
+	// {{ry_placeholder:new_route_resources}}
+}
+
+func NewFileRoute(rg *gin.RouterGroup) *FileRoute {
+	return &FileRoute{
+		routeGroup: rg,
+	}
+}

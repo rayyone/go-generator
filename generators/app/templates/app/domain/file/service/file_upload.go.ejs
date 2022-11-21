@@ -1,0 +1,177 @@
+package filesvc
+
+import (
+	"bytes"
+	"encoding/json"
+	filehelper "github.com/rayyone/go-core/helpers/file"
+	imagehelper "github.com/rayyone/go-core/helpers/image"
+	"github.com/rayyone/go-core/helpers/pagination"
+	"github.com/rayyone/go-core/ryerr"
+	"github.com/rayyone/go-core/storage"
+	"gorm.io/datatypes"
+	"mime/multipart"
+	"path/filepath"
+	fileuploadhelper "<%= appModName %>/app/domain/file/helpers"
+	"<%= appModName %>/app/domain/file/request"
+	"<%= appModName %>/app/errcode"
+	"<%= appModName %>/app/foundation/container"
+	containerrepo "<%= appModName %>/app/foundation/repo/container"
+	"<%= appModName %>/app/foundation/service/base"
+	"<%= appModName %>/app/helpers"
+	"<%= appModName %>/app/model"
+	"<%= appModName %>/config"
+)
+
+type FileUploadSvc struct {
+	*basesvc.BaseService
+	storage *storage.Storage
+}
+
+func NewFileUploadSvc(repo *containerrepo.Repo, s *storage.Storage) *FileUploadSvc {
+	return &FileUploadSvc{
+		BaseService: &basesvc.BaseService{
+			Repo: repo,
+		},
+		storage: s,
+	}
+}
+
+func (s *FileUploadSvc) All(r *container.Request) ([]*model.FileUpload, *pagination.Paginator, error) {
+	fileUploads, paginator, err := s.Repo.FileUpload.All(r)
+	if err != nil {
+		return nil, nil, ryerr.Msg(err, "Cannot get all entities")
+	}
+
+	for _, e := range fileUploads {
+		e.GetAccessors()
+	}
+
+	return fileUploads, paginator, nil
+}
+
+func (s *FileUploadSvc) Find(r *container.Request, fileUploadID string) (*model.FileUpload, error) {
+	var fileUpload model.FileUpload
+	_, err := s.Repo.FileUpload.FindByID(r, &fileUpload, fileUploadID)
+	if err != nil {
+		return nil, errcode.NotFound.New("Entity not found")
+	}
+	fileUpload.GetAccessors()
+	return &fileUpload, err
+}
+
+func (s *FileUploadSvc) Store(r *container.Request, params *request.NewFileUpload) (*model.FileUpload, error) {
+	var fileUpload model.FileUpload
+	var err error
+	file, err := params.File.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	filename := filehelper.RandomFilename(params.File)
+	fileURL, err := s.storage.Store(file, filename, params.Category)
+	var metaData []string
+
+	if imageResize := fileuploadhelper.GetImageResizes(params.Category); imageResize != nil {
+		for name, size := range imageResize {
+			image, err := filehelper.ReadFormFile(params.File)
+			if err != nil {
+				return nil, err
+			}
+			imageHelper := imagehelper.NewImageHelper(image)
+			imageResize, err := imageHelper.Resize(size.Width, size.Width)
+			if err != nil {
+				return nil, err
+			}
+			imageResizeName := name + filename
+			_, err = s.storage.Store(bytes.NewReader(imageResize), imageResizeName, params.Category)
+			if err != nil {
+				return nil, err
+			}
+			metaData = append(metaData, imageResizeName)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	err = helpers.BindData(&fileUpload.FileUploadTbl, params)
+	if err != nil {
+		return nil, err
+	}
+	fileUpload.FileUploadTbl.Name = filename
+	fileUpload.FileUploadTbl.Path = filepath.Join(params.Category, filename)
+	fileUpload.FileUploadTbl.URL = *fileURL
+	jsonStr, err := json.Marshal(map[string]interface{}{"resize": metaData})
+	if err != nil {
+		return nil, err
+	}
+	fileUpload.FileUploadTbl.Meta = datatypes.JSON(jsonStr)
+
+	if _, err := s.Repo.FileUpload.Save(r, &fileUpload.FileUploadTbl); err != nil {
+		return nil, err
+	}
+
+	var refreshFileUpload model.FileUpload
+	_, err = s.Repo.FileUpload.FindByID(r, &refreshFileUpload, fileUpload.ID)
+	refreshFileUpload.GetAccessors()
+
+	return &refreshFileUpload, nil
+}
+
+func (s *FileUploadSvc) Update(r *container.Request, fileUploadID string, params *request.UpdateFileUpload) (*model.FileUpload, error) {
+	var err error
+	fileUpload, err := s.Find(r, fileUploadID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = helpers.BindData(&fileUpload.FileUploadTbl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.Repo.FileUpload.Save(r, &fileUpload.FileUploadTbl); err != nil {
+		return nil, err
+	}
+
+	fileUpload.GetAccessors()
+
+	return fileUpload, nil
+}
+
+func (s *FileUploadSvc) Delete(r *container.Request, fileUploadID string) error {
+	if _, err := s.Repo.FileUpload.DeleteWhere(r, &model.FileUpload{}, "id = ?", fileUploadID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *FileUploadSvc) StoreProfilePicture(profilePicture *multipart.FileHeader) (*string, error) {
+	storageFolders := config.All().Storage.Folders
+	doc, err := profilePicture.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	filename := filehelper.RandomFilename(profilePicture)
+	profilePictureURL, err := s.storage.Store(doc, filename, storageFolders["profile_picture"])
+	if err != nil {
+		return nil, err
+	}
+
+	return profilePictureURL, nil
+}
+
+func (s *FileUploadSvc) StoreFile(file *multipart.FileHeader, path string) (*string, *string, error) {
+	doc, err := file.Open()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	filename := filehelper.RandomFilename(file)
+	fileURL, err := s.storage.Store(doc, filename, path)
+	if err != nil {
+		return nil, nil, err
+	}
+	pathFile := filepath.Join(path, filename)
+	return fileURL, &pathFile, nil
+}

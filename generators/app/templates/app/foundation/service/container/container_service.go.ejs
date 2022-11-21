@@ -4,6 +4,7 @@ import (
 	"github.com/rayyone/go-core/mails"
 	"github.com/rayyone/go-core/storage"
 	authsvc "<%= appModName %>/app/domain/auth/service"
+	filesvc "<%= appModName %>/app/domain/file/service"
 	usersvc "<%= appModName %>/app/domain/user/service"
 	// {{ry_placeholder:svc_import}}
 )
@@ -18,5 +19,6 @@ type Service struct {
 	Auth        *authsvc.AuthSvc
 	Role        *authsvc.RoleSvc
 	RoleUser    *authsvc.RoleUserSvc
+	FileUpload  *filesvc.FileUploadSvc
 	// {{ry_placeholder:svc_new}}
 }

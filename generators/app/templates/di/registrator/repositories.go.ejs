@@ -4,6 +4,8 @@ import (
 	"github.com/google/wire"
 	authrp "<%= appModName %>/app/domain/auth/repo"
 	userrp "<%= appModName %>/app/domain/user/repo"
+	filerp "<%= appModName %>/app/domain/file/repo"
+	fileg "<%= appModName %>/app/domain/file/repo/gorm"
 	// {{ry_placeholder:repo_import}}
 
 	authg "<%= appModName %>/app/domain/auth/repo/gorm"
@@ -21,6 +23,7 @@ var ReposSet = wire.NewSet(
 	wire.Bind(new(authrp.Permission), new(*authg.PermissionGorm)),
 	wire.Bind(new(authrp.PermissionRole), new(*authg.PermissionRoleGorm)),
 	wire.Bind(new(authrp.RoleUser), new(*authg.RoleUserGorm)),
+	wire.Bind(new(filerp.FileUpload), new(*fileg.FileUploadGorm)),
 	// {{ry_placeholder:repo_bind}}
 )
 
@@ -33,5 +36,6 @@ var provideRepo = wire.NewSet(
 	authg.NewPermissionGorm,
 	authg.NewPermissionRoleGorm,
 	authg.NewRoleUserGorm,
+	fileg.NewFileUploadGorm,
 	// {{ry_placeholder:repo_new}}
 )

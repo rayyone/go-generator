@@ -1,0 +1,13 @@
+package filetfm
+
+import (
+	"<%= appModName %>/app/model"
+)
+
+type BasicFileUploadResp struct {
+	*model.FileUploadTbl
+}
+
+type FileUploadResp struct {
+	*BasicFileUploadResp
+}
