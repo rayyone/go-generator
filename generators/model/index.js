@@ -9,14 +9,9 @@
 
 const ArtifactGenerator = require('../../lib/artifact-generator');
 const debug = require('../../lib/debug')('model-generator');
-const utils = require('../../lib/utils');
-const chalk = require('chalk');
 const path = require('path');
 const g = require('../../lib/globalize');
-const {createPropertyTemplateData} = require('./property-definition');
 const {
-  golangTypeChoices,
-  dbFilterChoices,
   configDir,
   ryConfigModelDir,
   ryConfigDir,
@@ -25,7 +20,6 @@ const {
   getModelFileName,
   getModelSchemeFileName,
 } = require('../helpers');
-const {generateNewProps} = require('../gen-config/templates/converter');
 const helpers = require("../helpers");
 
 const MODEL_TEMPLATE_PATH = 'model.go.ejs';
@@ -98,114 +92,9 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
   }
 
   async promptPropertyName() {
-    if (this.shouldExit()) return false;
-    this.log(g.f('Enter an empty property name when done'));
-    this.log(g.f('Input the same property name to override a previous one'));
-    this.log();
-
-    // This function can be called repeatedly so this deletes the previous
-    // property name if one was set.
-    delete this.propName;
-    const prompts = [
-      {
-        name: 'propName',
-        message: g.f('Enter the property name: (snake_case/camelCase does matter!)'),
-        validate: function (val) {
-          if (val) {
-            return utils.checkPropertyName(val);
-          } else {
-            return true;
-          }
-        },
-      },
-    ];
-
-    const answers = await this.prompt(prompts);
-    debug(`propName => ${JSON.stringify(answers)}`);
-    if (answers.propName) {
-      this.artifactInfo.properties[answers.propName] = {};
-      this.propName = answers.propName;
-    }
-    return this._promptPropertyInfo();
+    return super.promptPropertyName()
   }
 
-  _generateProperties() {
-    const propDefs = this.artifactInfo.properties;
-    this.artifactInfo.properties = {};
-    for (const key in propDefs) {
-      this.artifactInfo.properties[key] = createPropertyTemplateData(propDefs[key], key);
-    }
-    this.artifactInfo.newProps = generateNewProps(this.artifactInfo.properties);
-  }
-  // Internal Method. Called when a new property is entered.
-  // Prompts the user for more information about the property to be added.
-  async _promptPropertyInfo() {
-    if (!this.propName) {
-      this._generateProperties();
-      return true;
-    } else {
-      const prompts = [
-        {
-          name: 'type',
-          message: g.f('Property type:'),
-          type: 'list',
-          choices: golangTypeChoices,
-        },
-        {
-          name: 'itemType',
-          message: g.f('Type of array items:'),
-          type: 'list',
-          choices: golangTypeChoices.filter(choice => {
-            return choice !== 'array';
-          }),
-          when: answers => {
-            return answers.type === 'array';
-          },
-        },
-        {
-          name: 'required',
-          message: g.f('Is it required?:'),
-          type: 'confirm',
-          default: true,
-        },
-        {
-          name: 'nullable',
-          message: g.f('Is it nullable?:'),
-          type: 'confirm',
-          default: answers => {
-            return !answers.required
-          },
-        },
-        {
-          name: 'filterable',
-          message: g.f('Is it filterable?:'),
-          type: 'confirm',
-          when: answers => {
-            return "datatypes.JSON" !== answers.type
-                && "array" !== answers.type
-          },
-        },
-        {
-          name: 'filterType',
-          message: g.f('Filter type?:'),
-          type: 'list',
-          choices: dbFilterChoices,
-          when: answers => {
-            return answers.filterable === true;
-          },
-        },
-      ];
-
-      const answers = await this.prompt(prompts);
-      debug(`propertyInfo => ${JSON.stringify(answers)}`);
-
-      Object.assign(this.artifactInfo.properties[this.propName], answers);
-
-      this.log();
-      this.log(g.f("Let's add another property to %s", `${chalk.yellow(this.artifactInfo.className)}`));
-      return this.promptPropertyName();
-    }
-  }
   async promptAddSoftDelete() {
     if (this.shouldExit()) return false;
 

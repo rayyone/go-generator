@@ -14,6 +14,7 @@ const path = require('path');
 const helpers = require('../helpers');
 const {format2Digit, getGormType} = require('../helpers');
 const {snakeCase} = require('change-case');
+const _ = require('lodash');
 const MIGRATION_TEMPLATE_PATH = 'migration.go.ejs';
 const CUSTOM_CHOICE_VALUE = 'RyCustomMigration';
 const CLI_BASE_MIGRATIONS = [
@@ -32,7 +33,6 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
       rootDir: helpers.sourceRootDir,
       databaseRootDir: helpers.databaseRootDir,
     };
-
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
 
     this.artifactInfo.getGormType = getGormType;
@@ -66,7 +66,16 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
     await super.promptBaseDomain();
   }
 
+  async promptPropertyName() {
+    if (this.artifactInfo.isCustomChoice) {
+      await super.promptPropertyName();
+      this.artifactInfo.modelScheme.props = this.artifactInfo.newProps
+    }
+    return;
+  }
+
   getMigrationID() {
+
     const now = new Date();
     const year = now.getFullYear();
     const month = format2Digit(now.getMonth() + 1);
@@ -74,6 +83,10 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
     const hour = format2Digit(now.getHours());
     const minute = format2Digit(now.getMinutes());
     const fullDatetime = [year, month, day, hour, minute].join('');
+    if (this.artifactInfo.isCustomChoice && _.isUndefined(this.artifactInfo.name)) {
+      this.artifactInfo.name = _.get(this.artifactInfo, 'modelScheme.tableName')
+      this.generateNameCaseStyles()
+    }
     this.artifactInfo.migrationID = `${fullDatetime}_${this.artifactInfo.domainPkgName}_create_${snakeCase(
       this.artifactInfo.name,
     )}_table`;
