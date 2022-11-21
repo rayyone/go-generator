@@ -1,0 +1,38 @@
+package migration
+
+import (
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+	"<%= appModName %>/app/model"
+)
+
+func CreateFileUploadsTable() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "202210170951_file_create_file_upload_table",
+		Migrate: func(tx *gorm.DB) error {
+			type FileUpload struct {
+				ID            string          `gorm:"type:uuid;primaryKey;autoIncrement:false"`
+				Name          string          `gorm:"not null;type:varchar(255);index:file_upload_idx"`
+				Path          string          `gorm:"not null;type:varchar(255)"`
+				Url           string          `gorm:"not null;type:varchar(255)"`
+				Used          bool            `gorm:"not null;type:boolean;default:0"`
+				Category      string          `gorm:"not null;type:varchar(255);default:default;index:file_upload_idx"`
+				FileableType  string          `gorm:"null;type:varchar(255)"`
+				FileableID    string          `gorm:"null;uuid"`
+				OwnerID       string          `gorm:"null;uuid"`
+				Meta          *datatypes.JSON `gorm:"null;type:jsonb;default:'{}'"`
+				model.BaseTimestamps
+			}
+			if err := tx.Table("file_uploads").AutoMigrate(&FileUpload{}); err != nil {
+				return err
+			}
+
+			return nil
+		},
+
+		Rollback: func(tx *gorm.DB) error {
+			return tx.Migrator().DropTable("file_uploads")
+		},
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/swaggo/swag"
 	authRoute "<%= appModName %>/app/domain/auth/route"
 	userRoute "<%= appModName %>/app/domain/user/route"
+    fileRoute "<%= appModName %>/app/domain/file/route"
 	"<%= appModName %>/app/errcode"
 	containerctl "<%= appModName %>/app/foundation/controller/container"
 	"<%= appModName %>/app/foundation/middleware"
@@ -37,6 +38,9 @@ func InitRouter(controllers *containerctl.Controller) *gin.Engine {
 
 		authRoutes := authRoute.NewAuthRoute(v1)
 		authRoutes.Routes(controllers)
+
+		fileRoute := fileRoute.NewFileRoute(v1)
+		fileRoute.Routes(controllers)
 
 		// {{ry_placeholder:new_route_resources}}
 	}

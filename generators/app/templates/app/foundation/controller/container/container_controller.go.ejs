@@ -2,6 +2,7 @@ package containerctl
 
 import (
 	"<%= appModName %>/app/domain/auth/controller"
+	filectl "<%= appModName %>/app/domain/file/controller"
 	pingctl "<%= appModName %>/app/domain/ping/controller"
 	userctl "<%= appModName %>/app/domain/user/controller"
 	// {{ry_placeholder:ctl_import}}
@@ -16,5 +17,6 @@ type Controller struct {
 	Role        *authctl.RoleCtl
 	RoleUser    *authctl.RoleUserCtl
 	Auth        *authctl.AuthCtl
+	FileUpload  *filectl.FileUploadCtl
 	// {{ry_placeholder:ctl_new}}
 }

@@ -20,6 +20,7 @@ func Migrate(db *gorm.DB) error {
 		migration.CreatePermissionsTable(),
 		migration.CreatePermissionRolesTable(),
 		migration.AddRoleAndPermissionData(),
+		migration.CreateFileUploadsTable(),
 	})
 
 	if err := m.Migrate(); err != nil {

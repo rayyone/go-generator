@@ -1,0 +1,22 @@
+package request
+
+import (
+	"mime/multipart"
+)
+
+type NewFileUpload struct {
+	File     *multipart.FileHeader `form:"-" swaggerignore:"true" `
+	Category string                `json:"category" form:"category" binding:"required" enums:"user_profile,job_image"`
+	OwnerID  *string               `json:"-" form:"-" swaggerignore:"true"`
+	// {{ry_placeholder:new_props}}
+}
+
+type UpdateFileUpload struct {
+	Name     string          `json:"name" form:"name" binding:"required" `
+	Path     string          `json:"path" form:"path" binding:"required" `
+	Url      string          `json:"url" form:"url" binding:"required" `
+	Used     bool            `json:"used" form:"used" binding:"required" `
+	Category string          `json:"category" form:"category" binding:"required" `
+	OwnerID  *string         `json:"owner_id" form:"owner_id" binding:"" `
+	// {{ry_placeholder:new_props}}
+}

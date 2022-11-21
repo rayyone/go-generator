@@ -3,6 +3,7 @@ package registrator
 import (
 	"github.com/google/wire"
 	authctl "<%= appModName %>/app/domain/auth/controller"
+	filectl "<%= appModName %>/app/domain/file/controller"
 	pingctl "<%= appModName %>/app/domain/ping/controller"
 	userctl "<%= appModName %>/app/domain/user/controller"
 	containerctl "<%= appModName %>/app/foundation/controller/container"
@@ -19,5 +20,6 @@ var ControllersSet = wire.NewSet(
 	authctl.NewPermissionCtl,
 	authctl.NewRoleUserCtl,
 	authctl.NewAuthCtl,
+	filectl.NewFileUploadCtl,
 	// {{ry_placeholder:ctl_new}}
 )

@@ -1,0 +1,156 @@
+package filectl
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/rayyone/go-core/helpers/method"
+	fileuploadhelper "<%= appModName %>/app/domain/file/helpers"
+	"<%= appModName %>/app/domain/file/request"
+	"<%= appModName %>/app/domain/file/tfm"
+	"<%= appModName %>/app/errcode"
+	basectl "<%= appModName %>/app/foundation/controller/base"
+	"<%= appModName %>/app/foundation/service/container"
+	basetfm "<%= appModName %>/app/foundation/tfm/base"
+	"<%= appModName %>/app/helpers/response"
+	"<%= appModName %>/app/model"
+)
+
+type FileUploadCtl struct {
+	*basectl.BaseController
+}
+
+func NewFileUploadCtl(service *containersvc.Service) *FileUploadCtl {
+	return &FileUploadCtl{
+		BaseController: &basectl.BaseController{
+			Service: service,
+		},
+	}
+}
+
+// All
+// @Security Bearer
+// @Summary      Get all File upload
+// @Tags         File upload
+// @Accept       json
+// @Produce      json
+// @Param        name	query	string	false	"Search Name. Type: ="
+// @Param        path	query	string	false	"Search Path. Type: ="
+// @Param        used	query	string	false	"Search used. Type: ="
+// @Param        category	query	string	false	"Search Category. Type: ="
+// @Param        order_by	query	string	false	"field,direction. Ex: id,desc"
+// @Param        page	query	number	false	"Page"
+// @Param        limit	query	number	false	"Limit"
+// @Success      200  {object}   swagger.PaginatorResponse{data=[]filetfm.FileUploadResp}
+// @Router       /file_uploads [get]
+func (ctl *FileUploadCtl) All(c *gin.Context) {
+	ctl.BasePrepare(c)
+
+	fileUploads, paginator, err := ctl.Service.FileUpload.All(ctl.Request)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformSlice[model.FileUpload, filetfm.FileUploadResp](fileUploads)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccessWithPaginator(c, res, paginator, "")
+}
+
+// GetByID
+// @Security Bearer
+// @Summary      Get File upload by ID
+// @Tags         File upload
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "File upload ID"
+// @Success      200  {object}   swagger.ResponseWithData{data=filetfm.FileUploadResp}
+// @Router       /file_uploads/{id} [get]
+func (ctl *FileUploadCtl) GetByID(c *gin.Context) {
+	fileUploadID := c.Param("fileUploadID")
+	if fileUploadID == "" {
+		response.RespondError(c, errcode.Validation.New("File upload id is required!"))
+		return
+	}
+
+	ctl.BasePrepare(c)
+	fileUpload, err := ctl.Service.FileUpload.Find(ctl.Request, fileUploadID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	res, err := basetfm.TransformOne[model.FileUpload, filetfm.FileUploadResp](fileUpload)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, res, "")
+}
+
+// Store
+// @Security Bearer
+// @Summary      Create a new File upload
+// @Tags         File upload
+// @Accept       mpfd
+// @Produce      json
+// @Param        file formData request.NewFileUpload true "file upload"
+// @Param        file formData file true "file upload"
+// @Success      201  {object}   swagger.ResponseWithData{data=filetfm.FileUploadResp}
+// @Router       /file_uploads [post]
+func (ctl *FileUploadCtl) Store(c *gin.Context) {
+	ctl.BasePrepare(c)
+	var params request.NewFileUpload
+	if err := ctl.Request.SetPostParams(&params); err != nil {
+		return
+	}
+	params.File, _ = c.FormFile("file")
+	allowTypes, err := fileuploadhelper.GetAllowTypes(params.Category)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	err = ctl.Request.ValidateFileType(params.File, allowTypes)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	currentUserId, _ := c.Get("UserID")
+	params.OwnerID = method.Ptr(currentUserId.(string))
+	fileUpload, err := ctl.Service.FileUpload.Store(ctl.Request, &params)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+
+	res, err := basetfm.TransformOne[model.FileUpload, filetfm.FileUploadResp](fileUpload)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondCreated(c, res, "File upload has been added successfully.")
+}
+
+// Delete
+// @Security Bearer
+// @Summary      Delete a File upload
+// @Tags         File upload
+// @Accept       json
+// @Produce      json
+// @Param        id path  string  true  "File upload ID"
+// @Success      201  {object}   swagger.ResponseWithData{data=boolean}
+// @Router       /file_uploads/{id} [delete]
+func (ctl *FileUploadCtl) Delete(c *gin.Context) {
+	ctl.BasePrepare(c)
+	fileUploadID := c.Param("fileUploadID")
+	if fileUploadID == "" {
+		response.RespondError(c, errcode.Validation.New("File upload id is required!"))
+		return
+	}
+
+	err := ctl.Service.FileUpload.Delete(ctl.Request, fileUploadID)
+	if err != nil {
+		response.RespondError(c, err)
+		return
+	}
+	response.RespondSuccess(c, true, "File upload has been deleted successfully.")
+}

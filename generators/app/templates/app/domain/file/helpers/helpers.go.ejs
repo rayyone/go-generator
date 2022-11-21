@@ -1,0 +1,40 @@
+package helpers
+
+import (
+	imagehelper "github.com/rayyone/go-core/helpers/image"
+	"<%= appModName %>/app/domain/file/constant"
+	"<%= appModName %>/app/errcode"
+)
+func GetAllowTypes(category string) ([]string, error) {
+	switch category {
+	case constant.Image:
+		return []string{"image"}, nil
+	case constant.UserProfile:
+		return []string{"image"}, nil
+	case constant.JobImage:
+		return []string{"image"}, nil
+	default:
+		return nil, errcode.Validation.New("This category is not supported")
+	}
+}
+
+func GetImageResizes(category string) map[string]imagehelper.ImageSize {
+	switch category {
+	case constant.UserProfile:
+		return map[string]imagehelper.ImageSize{
+			"100x100": {
+				Width: 100,
+				Height: 100,
+			},
+		}
+	case constant.JobImage:
+		return map[string]imagehelper.ImageSize{
+			"thumbnail": {
+				Width: 400,
+				Height: 400,
+			},
+		}
+	default:
+		return nil
+	}
+}
