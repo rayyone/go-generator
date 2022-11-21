@@ -13,10 +13,12 @@ func Create<%= pluralClassName %>Table() *gormigrate.Migration {
 			type <%= className %> struct {
 				ID             string     `gorm:"type:uuid;primaryKey;autoIncrement:false;default:gen_random_uuid()"`
 				<%- include('print-props') %>
-					CreatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
-					UpdatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
-				<% if (modelScheme.softDeletes) { -%>
-					DeletedAt *gorm.DeletedAt `sql:"index" gorm:"type:timestamp with time zone;"`
+				<% if (!isCustomChoice) { -%>
+						CreatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
+						UpdatedAt time.Time `gorm:"type:timestamp with time zone;not null;default:now()"`
+					<% if (modelScheme.softDeletes) { -%>
+						DeletedAt *gorm.DeletedAt `sql:"index" gorm:"type:timestamp with time zone;"`
+					<% } -%>
 				<% } -%>
 			}
 			if err := tx.Table("<%= tableName %>").AutoMigrate(&<%= className %>{}); err != nil {
