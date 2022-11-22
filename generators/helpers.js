@@ -62,28 +62,76 @@ exports.newRoutePlaceholder = exports.getPlaceholder('new_route_resources');
 exports.newRouteImportPlaceholder = exports.getPlaceholder('new_route_resources_import');
 
 exports.golangTypeChoices = ['string', 'text', 'uuid', 'bool', 'int', 'int64', 'time.Time', 'datatypes.JSON', 'array'];
+exports.golangArrayTypeChoices = ['string', 'uuid', 'bool', 'int', 'int64']
 
 exports.dbFilterChoices = ['=', 'ilike', 'like', 'range'];
-
+exports.packageList = {
+  'time.Time': 'time',
+  'datatypes.JSON': 'gorm.io/datatypes',
+  'pq.Int64Array': 'github.com/lib/pq',
+  'pq.Int32Array': 'github.com/lib/pq',
+  'pq.StringArray': 'github.com/lib/pq',
+}
 exports.getListPackage = function () {
-  return _.cloneDeep({
-    'time.Time': 'time',
-    'datatypes.JSON': 'gorm.io/datatypes',
-    '[]string': 'github.com/lib/pq',
-    '[]*string': 'github.com/lib/pq',
-  });
+  return _.cloneDeep(exports.packageList);
 };
 
-exports.convertToGoLangType = gormType => {
-  const orgType = gormType.replace(/\*/g, '');
-  switch (orgType) {
+exports.importPackage = props => {
+  let packages = []
+  props.forEach((prop) => {
+    let package = _.get(exports.packageList, prop.goType, null)
+    if (package && !packages.includes(package)) {
+      // packages.push(`"${package}"`)
+      packages.push(package)
+    }
+  })
+  return packages
+}
+
+exports.filterModelType = prop => {
+  switch (prop.goType) {
+    case '[]int':
+      return 'pq.Int32Array';
+    case '[]*int':
+      return '*pq.Int32Array';
+    case '[]int64':
+      return 'pq.Int64Array';
+    case '[]*int64':
+      return '*pq.Int64Array';
+    case '[]string':
+      return 'pq.StringArray';
+    case '[]*string':
+      return '*pq.StringArray';
     case 'text':
       return 'string';
+    case '*text':
+      return '*string';
     default:
-      return gormType;
+      return prop.goType;
   }
-};
-
+}
+exports.filterGormTag = prop => {
+  switch (prop.goType) {
+    case 'pq.Int32Array':
+    case '*pq.Int32Array':
+      return 'pq:Int32Array';
+    case 'pq.Int64Array':
+    case '*pq.Int64Array':
+      return 'pq.Int64Array';
+    case 'pq.StringArray':
+    case '*pq.StringArray':
+      return 'type:varchar(1000)[]';
+    default:
+      return null;
+  }
+}
+exports.filterGormType = prop => {
+  let gormType = exports.getGormType(prop.orgType)
+  if (prop.type == 'array') {
+    return `${gormType}[]`
+  }
+  return gormType
+}
 exports.getGormType = golangType => {
   const orgType = golangType.replace(/\*/g, '');
   switch (orgType) {

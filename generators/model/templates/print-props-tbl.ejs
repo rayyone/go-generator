@@ -1,8 +1,6 @@
 <% Object.entries(properties).forEach(([propKey, propVal]) => { -%>
-	<% if (propVal.goType === '[]string' || propVal.goType === '[]*string') { -%>
-	<%= propVal.pascalName %>      pq.StringArray       `json:"<%= propKey %>" gorm:"type:varchar(200)[]"`
-	<% } else { -%>
-	<%= propVal.pascalName %>      <%= propVal.goType %>       `json:"<%= propKey %>"`
-	<% } -%>
+	<% gormType = helpers.filterGormType(propVal) -%>
+	<% if (gormType) {gormType = `type:${gormType}`} -%>
+	<%= propVal.pascalName %>      <%= propVal.goType %>       `json:"<%= propKey %>" gorm:"<%= gormType %>"`
 <% }) -%>
 	<%= newPropsPlaceholder %>

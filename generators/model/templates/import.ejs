@@ -1,9 +1,5 @@
 <% var propArr = Object.values(properties) -%>
-<% for (var l = propArr.length, i = 0; i < l; i++) { -%>
-	<% var prop = propArr[i] -%>
-	<% var package = listPackageImport[prop.orgType] -%>
-	<% if (package) { -%>
-		"<%=package%>"
-	<% } -%>
-	<% listPackageImport[prop.orgType] = null -%>
-<% } -%>
+<% propArr = helpers.importPackage(propArr) -%>
+<% propArr.forEach((package) => { -%>
+	"<%=package%>"
+<% }) -%>

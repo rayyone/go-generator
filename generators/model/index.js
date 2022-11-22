@@ -46,7 +46,7 @@ module.exports = class ModelGenerator extends ArtifactGenerator {
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, modelDir);
 
-    this.artifactInfo.listPackageImport = helpers.getListPackage();
+    this.artifactInfo.helpers = helpers;
     return super._setupGenerator();
   }
 
