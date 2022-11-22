@@ -9,7 +9,7 @@
 		<% listPackageImport[prop.orgType] = null -%>
 	<% } -%>
 	<% packageTime = listPackageImport["time.Time"] -%>
-	<% if (!isCustomChoice && packageTime) { -%>
+	<% if (!isCustomChoice && packageTime && type !='newProp') { -%>
 		"<%=packageTime%>"
 		<% listPackageImport["time.Time"] = null -%>
 	<% } -%>

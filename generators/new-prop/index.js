@@ -134,6 +134,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
       this.artifactInfo.migrationOutDir,
       this.artifactInfo.migrationOutFile,
     );
+    this.artifactInfo.type = 'newProp'
 
     this.copyTemplatedFiles(
       path.resolve(__dirname, `../migration/templates/${MIGRATION_ADD_COL_TEMPLATE_PATH}`),
