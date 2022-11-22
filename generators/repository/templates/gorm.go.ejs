@@ -40,6 +40,7 @@ func New<%= className %>Gorm() *<%= className %>Gorm {
 func (g *<%= className %>Gorm) All(r *container.Request) ([]*model.<%= className %>, *pagination.Paginator, error) {
 	var res []*model.<%= className %>
 	var total int64
+	var err error
 	tx := g.BaseQuery(r)
 
 <%- include('print-props') %>
