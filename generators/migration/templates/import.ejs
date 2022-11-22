@@ -8,7 +8,9 @@
 		<% } -%>
 		<% listPackageImport[prop.orgType] = null -%>
 	<% } -%>
-	<% if (!isCustomChoice && listPackageImport["time.Time"]) { -%>
-		"<%=package%>"
+	<% packageTime = listPackageImport["time.Time"] -%>
+	<% if (!isCustomChoice && packageTime) { -%>
+		"<%=packageTime%>"
+		<% listPackageImport["time.Time"] = null -%>
 	<% } -%>
 <% } -%>
