@@ -67,10 +67,15 @@ exports.golangArrayTypeChoices = ['string', 'uuid', 'bool', 'int', 'int64']
 exports.dbFilterChoices = ['=', 'ilike', 'like', 'range'];
 exports.packageList = {
   'time.Time': 'time',
+  '*time.Time': 'time',
   'datatypes.JSON': 'gorm.io/datatypes',
+  '*datatypes.JSON': 'gorm.io/datatypes',
   'pq.Int64Array': 'github.com/lib/pq',
+  '*pq.Int64Array': 'github.com/lib/pq',
   'pq.Int32Array': 'github.com/lib/pq',
+  '*pq.Int32Array': 'github.com/lib/pq',
   'pq.StringArray': 'github.com/lib/pq',
+  '*pq.StringArray': 'github.com/lib/pq',
 }
 exports.getListPackage = function () {
   return _.cloneDeep(exports.packageList);
