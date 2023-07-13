@@ -2,6 +2,7 @@ package userctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/request"
 	usertfm "<%= appModName %>/app/domain/user/tfm"
 	basectl "<%= appModName %>/app/foundation/controller/base"
@@ -32,14 +33,14 @@ func NewUserSocialCtl(service *containersvc.Service) *UserSocialCtl {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /users/social/connect [post]
 func (ctl *UserSocialCtl) Connect(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
 	var params request.SocialConnect
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
-	user, err := ctl.Service.UserSocial.Connect(ctl.Request, params)
+	user, err := ctl.Service.UserSocial.Connect(clientRequest, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return

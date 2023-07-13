@@ -2,6 +2,7 @@ package filectl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"github.com/rayyone/go-core/helpers/method"
 	fileuploadhelper "<%= appModName %>/app/domain/file/helpers"
 	"<%= appModName %>/app/domain/file/request"
@@ -42,9 +43,9 @@ func NewFileUploadCtl(service *containersvc.Service) *FileUploadCtl {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]filetfm.FileUploadResp}
 // @Router       /file_uploads [get]
 func (ctl *FileUploadCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	fileUploads, paginator, err := ctl.Service.FileUpload.All(ctl.Request)
+	fileUploads, paginator, err := ctl.Service.FileUpload.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -73,8 +74,8 @@ func (ctl *FileUploadCtl) GetByID(c *gin.Context) {
 		return
 	}
 
-	ctl.BasePrepare(c)
-	fileUpload, err := ctl.Service.FileUpload.Find(ctl.Request, fileUploadID)
+	clientRequest := contRequest.InitRequest(c)
+	fileUpload, err := ctl.Service.FileUpload.Find(clientRequest, fileUploadID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -98,9 +99,9 @@ func (ctl *FileUploadCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=filetfm.FileUploadResp}
 // @Router       /file_uploads [post]
 func (ctl *FileUploadCtl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.NewFileUpload
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 	params.File, _ = c.FormFile("file")
@@ -109,14 +110,14 @@ func (ctl *FileUploadCtl) Store(c *gin.Context) {
 		response.RespondError(c, err)
 		return
 	}
-	err = ctl.Request.ValidateFileType(params.File, allowTypes)
+	err = clientRequest.ValidateFileType(params.File, allowTypes)
 	if err != nil {
 		response.RespondError(c, err)
 		return
 	}
 	currentUserId, _ := c.Get("UserID")
 	params.OwnerID = method.Ptr(currentUserId.(string))
-	fileUpload, err := ctl.Service.FileUpload.Store(ctl.Request, &params)
+	fileUpload, err := ctl.Service.FileUpload.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -140,14 +141,14 @@ func (ctl *FileUploadCtl) Store(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /file_uploads/{id} [delete]
 func (ctl *FileUploadCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	fileUploadID := c.Param("fileUploadID")
 	if fileUploadID == "" {
 		response.RespondError(c, errcode.Validation.New("File upload id is required!"))
 		return
 	}
 
-	err := ctl.Service.FileUpload.Delete(ctl.Request, fileUploadID)
+	err := ctl.Service.FileUpload.Delete(clientRequest, fileUploadID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

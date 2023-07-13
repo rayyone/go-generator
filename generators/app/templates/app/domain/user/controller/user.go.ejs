@@ -2,6 +2,7 @@ package userctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/user/request"
 	usertfm "<%= appModName %>/app/domain/user/tfm"
 	"<%= appModName %>/app/errcode"
@@ -33,11 +34,11 @@ func NewUserCtl(service *containersvc.Service) *UserCtl {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /me [get]
 func (ctl *UserCtl) GetMyDetail(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var user *model.User
 	var err error
 
-	user, err = ctl.Service.User.FindWithRolePermissions(ctl.Request, ctl.Request.UserID)
+	user, err = ctl.Service.User.FindWithRolePermissions(clientRequest, clientRequest.UserID)
 
 	if err != nil {
 		response.RespondError(c, err)
@@ -62,12 +63,12 @@ func (ctl *UserCtl) GetMyDetail(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /me [put]
 func (ctl *UserCtl) UpdateMyDetail(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var requestParams request.UpdateMyDetail
-	if err := ctl.Request.SetPostParams(&requestParams); err != nil {
+	if err := clientRequest.SetPostParams(&requestParams); err != nil {
 		return
 	}
-	user, err := ctl.Service.User.UpdateMyDetail(ctl.Request, ctl.Request.UserID, requestParams)
+	user, err := ctl.Service.User.UpdateMyDetail(clientRequest, clientRequest.UserID, requestParams)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -96,9 +97,9 @@ func (ctl *UserCtl) UpdateMyDetail(c *gin.Context) {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]usertfm.UserResp}
 // @Router       /users [get]
 func (ctl *UserCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	users, paginator, err := ctl.Service.User.All(ctl.Request)
+	users, paginator, err := ctl.Service.User.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -127,8 +128,8 @@ func (ctl *UserCtl) GetByID(c *gin.Context) {
 		response.RespondError(c, errcode.Validation.New("User id is required!"))
 		return
 	}
-	ctl.BasePrepare(c)
-	user, err := ctl.Service.User.Find(ctl.Request, userID)
+	clientRequest := contRequest.InitRequest(c)
+	user, err := ctl.Service.User.Find(clientRequest, userID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -151,15 +152,15 @@ func (ctl *UserCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /users [post]
 func (ctl *UserCtl) StoreByAdmin(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("users.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "users.create_update") {
 		return
 	}
 	var params request.NewUserByAdmin
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	user, err := ctl.Service.User.Store(ctl.Request, &params)
+	user, err := ctl.Service.User.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -184,8 +185,8 @@ func (ctl *UserCtl) StoreByAdmin(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /users/{id} [put]
 func (ctl *UserCtl) UpdateByAdmin(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("users.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "users.create_update") {
 		return
 	}
 	userID := c.Param("userID")
@@ -195,10 +196,10 @@ func (ctl *UserCtl) UpdateByAdmin(c *gin.Context) {
 	}
 
 	var params request.UpdateByAdmin
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	user, err := ctl.Service.User.UpdateByAdmin(ctl.Request, userID, params)
+	user, err := ctl.Service.User.UpdateByAdmin(clientRequest, userID, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -222,8 +223,8 @@ func (ctl *UserCtl) UpdateByAdmin(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /users/{id} [delete]
 func (ctl *UserCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("users.delete") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "users.delete") {
 		return
 	}
 	userID := c.Param("userID")
@@ -232,7 +233,7 @@ func (ctl *UserCtl) Delete(c *gin.Context) {
 		return
 	}
 
-	err := ctl.Service.User.Delete(ctl.Request, userID)
+	err := ctl.Service.User.Delete(clientRequest, userID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

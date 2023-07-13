@@ -2,6 +2,7 @@ package <%= domainPkgName %>ctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/errcode"
 	"<%= appModName %>/app/helpers/response"
 	"<%= appModName %>/app/domain/<%= domainName %>/request"
@@ -9,7 +10,6 @@ import (
 	basectl "<%= appModName %>/app/foundation/controller/base"
 	basetfm "<%= appModName %>/app/foundation/tfm/base"
 	"<%= appModName %>/app/foundation/service/container"
-	"<%= appModName %>/app/helpers/response"
 	"<%= appModName %>/app/model"
 )
 
@@ -48,9 +48,9 @@ func New<%= className %>Ctl(service *containersvc.Service) *<%= className %>Ctl 
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]<%= domainPkgName %>tfm.<%= pascalName %>Resp}
 // @Router       /<%= pluralSnakeName %> [get]
 func (ctl *<%= className %>Ctl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	<%= pluralCamelName %>, paginator, err := ctl.Service.<%= className %>.All(ctl.Request)
+	<%= pluralCamelName %>, paginator, err := ctl.Service.<%= className %>.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -79,8 +79,8 @@ func (ctl *<%= className %>Ctl) GetByID(c *gin.Context) {
 		return
 	}
 
-	ctl.BasePrepare(c)
-	<%= camelName %>, err := ctl.Service.<%= className %>.Find(ctl.Request, <%= camelName %>ID)
+	clientRequest := contRequest.InitRequest(c)
+	<%= camelName %>, err := ctl.Service.<%= className %>.Find(clientRequest, <%= camelName %>ID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -103,12 +103,12 @@ func (ctl *<%= className %>Ctl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=<%= domainPkgName %>tfm.<%= pascalName %>Resp}
 // @Router       /<%= pluralSnakeName %> [post]
 func (ctl *<%= className %>Ctl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.New<%= className %>
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	<%= camelName %>, err := ctl.Service.<%= className %>.Store(ctl.Request, &params)
+	<%= camelName %>, err := ctl.Service.<%= className %>.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -133,7 +133,7 @@ func (ctl *<%= className %>Ctl) Store(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=<%= domainPkgName %>tfm.<%= pascalName %>Resp}
 // @Router       /<%= pluralSnakeName %>/{id} [put]
 func (ctl *<%= className %>Ctl) Update(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	<%= camelName %>ID := c.Param("<%= camelName %>ID")
 	if <%= camelName %>ID == "" {
 		response.RespondError(c, errcode.Validation.New("<%= sentenceName %> id is required!"))
@@ -141,10 +141,10 @@ func (ctl *<%= className %>Ctl) Update(c *gin.Context) {
 	}
 
 	var params request.Update<%= className %>
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	<%= camelName %>, err := ctl.Service.<%= className %>.Update(ctl.Request, <%= camelName %>ID, &params)
+	<%= camelName %>, err := ctl.Service.<%= className %>.Update(clientRequest, <%= camelName %>ID, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -168,14 +168,14 @@ func (ctl *<%= className %>Ctl) Update(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /<%= pluralSnakeName %>/{id} [delete]
 func (ctl *<%= className %>Ctl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	<%= camelName %>ID := c.Param("<%= camelName %>ID")
 	if <%= camelName %>ID == "" {
 		response.RespondError(c, errcode.Validation.New("<%= sentenceName %> id is required!"))
 		return
 	}
 
-	err := ctl.Service.<%= className %>.Delete(ctl.Request, <%= camelName %>ID)
+	err := ctl.Service.<%= className %>.Delete(clientRequest, <%= camelName %>ID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

@@ -1,7 +1,6 @@
 package basectl
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/rayyone/go-core/helpers/method"
 	"<%= appModName %>/app/errcode"
 	"<%= appModName %>/app/foundation/container"
@@ -11,25 +10,20 @@ import (
 
 type BaseController struct {
 	Service *containersvc.Service
-	Request *container.Request
 }
 
-func (ctl *BaseController) BasePrepare(c *gin.Context) {
-	ctl.Request = container.InitRequest(c)
-}
-
-func (ctl *BaseController) Validate(param interface{}) error {
+func (ctl *BaseController) Validate(request *container.Request, param interface{}) error {
 	err := method.ValidateStruct(param)
 	if err != nil {
-		_ = ctl.Request.GinCtx.Error(err)
+		_ = request.GinCtx.Error(err)
 		return err
 	}
 	return nil
 }
 
-func (ctl *BaseController) HasPermissions(permissions ...string) bool {
-	if !ctl.Request.HasPermissions(permissions...) {
-		response.RespondError(ctl.Request.GinCtx, errcode.Forbidden.New("You are not authorized!"))
+func (ctl *BaseController) HasPermissions(request *container.Request, permissions ...string) bool {
+	if !request.HasPermissions(permissions...) {
+		response.RespondError(request.GinCtx, errcode.Forbidden.New("You are not authorized!"))
 		return false
 	}
 	return true
