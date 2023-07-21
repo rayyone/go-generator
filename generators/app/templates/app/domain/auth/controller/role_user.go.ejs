@@ -2,6 +2,7 @@ package authctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/request"
 	authtfm "<%= appModName %>/app/domain/auth/tfm"
 	"<%= appModName %>/app/errcode"
@@ -37,9 +38,9 @@ func NewRoleUserCtl(service *containersvc.Service) *RoleUserCtl {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.RoleUserResp}
 // @Router       /role_users [get]
 func (ctl *RoleUserCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	roleUsers, paginator, err := ctl.Service.RoleUser.All(ctl.Request)
+	roleUsers, paginator, err := ctl.Service.RoleUser.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -68,8 +69,8 @@ func (ctl *RoleUserCtl) GetByID(c *gin.Context) {
 		response.RespondError(c, errcode.Validation.New("Role user id is required!"))
 		return
 	}
-	ctl.BasePrepare(c)
-	roleUser, err := ctl.Service.RoleUser.Find(ctl.Request, roleUserID)
+	clientRequest := contRequest.InitRequest(c)
+	roleUser, err := ctl.Service.RoleUser.Find(clientRequest, roleUserID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -92,12 +93,12 @@ func (ctl *RoleUserCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=authtfm.RoleUserResp}
 // @Router       /role_users [post]
 func (ctl *RoleUserCtl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.NewRoleUser
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	roleUser, err := ctl.Service.RoleUser.Store(ctl.Request, &params)
+	roleUser, err := ctl.Service.RoleUser.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -122,7 +123,7 @@ func (ctl *RoleUserCtl) Store(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=authtfm.RoleUserResp}
 // @Router       /role_users/{id} [put]
 func (ctl *RoleUserCtl) Update(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	roleUserID := c.Param("roleUserID")
 	if roleUserID == "" {
 		response.RespondError(c, errcode.Validation.New("Role user id is required!"))
@@ -130,10 +131,10 @@ func (ctl *RoleUserCtl) Update(c *gin.Context) {
 	}
 
 	var params request.UpdateRoleUser
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	roleUser, err := ctl.Service.RoleUser.Update(ctl.Request, roleUserID, &params)
+	roleUser, err := ctl.Service.RoleUser.Update(clientRequest, roleUserID, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -157,14 +158,14 @@ func (ctl *RoleUserCtl) Update(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /role_users/{id} [delete]
 func (ctl *RoleUserCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	roleUserID := c.Param("roleUserID")
 	if roleUserID == "" {
 		response.RespondError(c, errcode.Validation.New("Role user id is required!"))
 		return
 	}
 
-	err := ctl.Service.RoleUser.Delete(ctl.Request, roleUserID)
+	err := ctl.Service.RoleUser.Delete(clientRequest, roleUserID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

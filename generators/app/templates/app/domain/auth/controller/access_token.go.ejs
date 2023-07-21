@@ -2,6 +2,7 @@ package authctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/request"
 	authtfm "<%= appModName %>/app/domain/auth/tfm"
 	"<%= appModName %>/app/errcode"
@@ -38,11 +39,11 @@ func NewAccessTokenCtl(service *containersvc.Service) *AccessTokenCtl {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.AccessTokenResp}
 // @Router       /access_tokens [get]
 func (ctl *AccessTokenCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("access_tokens.manage_view") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "access_tokens.manage_view") {
 		return
 	}
-	accessTokens, paginator, err := ctl.Service.AccessToken.All(ctl.Request)
+	accessTokens, paginator, err := ctl.Service.AccessToken.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -71,11 +72,11 @@ func (ctl *AccessTokenCtl) GetByID(c *gin.Context) {
 		response.RespondError(c, errcode.Validation.New("Access token id is required!"))
 		return
 	}
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("access_tokens.manage_view") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "access_tokens.manage_view") {
 		return
 	}
-	accessToken, err := ctl.Service.AccessToken.Find(ctl.Request, accessTokenID)
+	accessToken, err := ctl.Service.AccessToken.Find(clientRequest, accessTokenID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -98,15 +99,15 @@ func (ctl *AccessTokenCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=authtfm.AccessTokenResp}
 // @Router       /access_tokens [post]
 func (ctl *AccessTokenCtl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("access_tokens.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "access_tokens.create_update") {
 		return
 	}
 	var params request.NewAccessToken
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	accessToken, err := ctl.Service.AccessToken.Store(ctl.Request, &params)
+	accessToken, err := ctl.Service.AccessToken.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -131,8 +132,8 @@ func (ctl *AccessTokenCtl) Store(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=authtfm.AccessTokenResp}
 // @Router       /access_tokens/{id} [put]
 func (ctl *AccessTokenCtl) Update(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("access_tokens.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "access_tokens.create_update") {
 		return
 	}
 	accessTokenID := c.Param("accessTokenID")
@@ -142,10 +143,10 @@ func (ctl *AccessTokenCtl) Update(c *gin.Context) {
 	}
 
 	var params request.UpdateAccessToken
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	accessToken, err := ctl.Service.AccessToken.Update(ctl.Request, accessTokenID, &params)
+	accessToken, err := ctl.Service.AccessToken.Update(clientRequest, accessTokenID, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -169,8 +170,8 @@ func (ctl *AccessTokenCtl) Update(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /access_tokens/{id} [delete]
 func (ctl *AccessTokenCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("access_tokens.delete") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "access_tokens.delete") {
 		return
 	}
 	accessTokenID := c.Param("accessTokenID")
@@ -179,7 +180,7 @@ func (ctl *AccessTokenCtl) Delete(c *gin.Context) {
 		return
 	}
 
-	err := ctl.Service.AccessToken.Delete(ctl.Request, accessTokenID)
+	err := ctl.Service.AccessToken.Delete(clientRequest, accessTokenID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

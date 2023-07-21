@@ -2,6 +2,7 @@ package authctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/request"
 	authtfm "<%= appModName %>/app/domain/auth/tfm"
 	"<%= appModName %>/app/errcode"
@@ -40,9 +41,9 @@ func NewPermissionCtl(service *containersvc.Service) *PermissionCtl {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.PermissionResp}
 // @Router       /permissions [get]
 func (ctl *PermissionCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	permissions, paginator, err := ctl.Service.Permission.All(ctl.Request)
+	permissions, paginator, err := ctl.Service.Permission.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -71,8 +72,8 @@ func (ctl *PermissionCtl) GetByID(c *gin.Context) {
 		response.RespondError(c, errcode.Validation.New("Permission id is required!"))
 		return
 	}
-	ctl.BasePrepare(c)
-	permission, err := ctl.Service.Permission.Find(ctl.Request, permissionID)
+	clientRequest := contRequest.InitRequest(c)
+	permission, err := ctl.Service.Permission.Find(clientRequest, permissionID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -95,15 +96,15 @@ func (ctl *PermissionCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=authtfm.PermissionResp}
 // @Router       /permissions [post]
 func (ctl *PermissionCtl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("permissions.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "permissions.create_update") {
 		return
 	}
 	var params request.NewPermission
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	permission, err := ctl.Service.Permission.Store(ctl.Request, &params)
+	permission, err := ctl.Service.Permission.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -128,8 +129,8 @@ func (ctl *PermissionCtl) Store(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=authtfm.PermissionResp}
 // @Router       /permissions/{id} [put]
 func (ctl *PermissionCtl) Update(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("permissions.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "permissions.create_update") {
 		return
 	}
 	permissionID := c.Param("permissionID")
@@ -139,10 +140,10 @@ func (ctl *PermissionCtl) Update(c *gin.Context) {
 	}
 
 	var params request.UpdatePermission
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	permission, err := ctl.Service.Permission.Update(ctl.Request, permissionID, &params)
+	permission, err := ctl.Service.Permission.Update(clientRequest, permissionID, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -166,8 +167,8 @@ func (ctl *PermissionCtl) Update(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /permissions/{id} [delete]
 func (ctl *PermissionCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("permissions.delete") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "permissions.delete") {
 		return
 	}
 	permissionID := c.Param("permissionID")
@@ -176,7 +177,7 @@ func (ctl *PermissionCtl) Delete(c *gin.Context) {
 		return
 	}
 
-	err := ctl.Service.Permission.Delete(ctl.Request, permissionID)
+	err := ctl.Service.Permission.Delete(clientRequest, permissionID)
 	if err != nil {
 		response.RespondError(c, err)
 		return

@@ -2,6 +2,7 @@ package authctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/constant"
 	"<%= appModName %>/app/domain/auth/request"
 	usertfm "<%= appModName %>/app/domain/user/tfm"
@@ -33,12 +34,12 @@ func NewAuthCtl(service *containersvc.Service) *AuthCtl {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserWithTokenResp}
 // @Router       /auth/login [post]
 func (ctl *AuthCtl) Login(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.Login
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	user, token, err := ctl.Service.Auth.Login(ctl.Request, &params)
+	user, token, err := ctl.Service.Auth.Login(clientRequest, &params)
 
 	if err != nil {
 		response.RespondError(c, err)
@@ -60,14 +61,14 @@ func (ctl *AuthCtl) Login(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /auth/register [post]
 func (ctl *AuthCtl) Register(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.Register
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
 	params.ProfilePicture, _ = c.FormFile("profile_picture")
-	err := ctl.Request.ValidateFileType(params.ProfilePicture, []string{"image"})
+	err := clientRequest.ValidateFileType(params.ProfilePicture, []string{"image"})
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -77,7 +78,7 @@ func (ctl *AuthCtl) Register(c *gin.Context) {
 		params.VerificationMethod = constant.VerificationMethodLink
 	}
 
-	user, err := ctl.Service.Auth.Register(ctl.Request, &params)
+	user, err := ctl.Service.Auth.Register(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -101,12 +102,12 @@ func (ctl *AuthCtl) Register(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserWithTokenResp}
 // @Router       /auth/social/authenticate [post]
 func (ctl *AuthCtl) SocialAuthenticate(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.SocialAuthenticate
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	user, token, err := ctl.Service.Auth.SocialAuthenticate(ctl.Request, params)
+	user, token, err := ctl.Service.Auth.SocialAuthenticate(clientRequest, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -124,13 +125,13 @@ func (ctl *AuthCtl) SocialAuthenticate(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /auth/account/verify [post]
 func (ctl *AuthCtl) VerifyAccount(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.AuthVerify
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
-	user, err := ctl.Service.Auth.VerifyAccount(ctl.Request, params)
+	user, err := ctl.Service.Auth.VerifyAccount(clientRequest, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -153,16 +154,16 @@ func (ctl *AuthCtl) VerifyAccount(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{}
 // @Router       /auth/account/verification/send_email [post]
 func (ctl *AuthCtl) SendAccountVerificationEmail(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.AuthSendAccountVerification
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
 	if params.VerificationMethod == "" {
 		params.VerificationMethod = constant.VerificationMethodLink
 	}
-	if err := ctl.Service.Auth.SendAccountVerificationEmail(ctl.Request, &params); err != nil {
+	if err := ctl.Service.Auth.SendAccountVerificationEmail(clientRequest, &params); err != nil {
 		response.RespondError(c, err)
 		return
 	}
@@ -179,16 +180,16 @@ func (ctl *AuthCtl) SendAccountVerificationEmail(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{}
 // @Router       /auth/account/reset_password/send_email [post]
 func (ctl *AuthCtl) SendResetPasswordEmail(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.AuthSendResetPassword
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
 	if params.VerificationMethod == "" {
 		params.VerificationMethod = constant.VerificationMethodLink
 	}
-	userID, err := ctl.Service.Auth.SendResetPasswordEmail(ctl.Request, &params)
+	userID, err := ctl.Service.Auth.SendResetPasswordEmail(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -210,13 +211,13 @@ func (ctl *AuthCtl) SendResetPasswordEmail(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /auth/account/reset_password/verify [post]
 func (ctl *AuthCtl) VerifyResetPassword(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.AuthVerify
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
-	user, err := ctl.Service.Auth.VerifyResetPassword(ctl.Request, params)
+	user, err := ctl.Service.Auth.VerifyResetPassword(clientRequest, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -238,13 +239,13 @@ func (ctl *AuthCtl) VerifyResetPassword(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=usertfm.UserResp}
 // @Router       /auth/account/reset_password [post]
 func (ctl *AuthCtl) ResetPassword(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 	var params request.AuthResetPassword
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
 
-	user, err := ctl.Service.Auth.ResetPassword(ctl.Request, params)
+	user, err := ctl.Service.Auth.ResetPassword(clientRequest, params)
 	if err != nil {
 		response.RespondError(c, err)
 		return

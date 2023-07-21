@@ -2,6 +2,7 @@ package authctl
 
 import (
 	"github.com/gin-gonic/gin"
+	contRequest "<%= appModName %>/app/foundation/container"
 	"<%= appModName %>/app/domain/auth/request"
 	authtfm "<%= appModName %>/app/domain/auth/tfm"
 	"<%= appModName %>/app/errcode"
@@ -37,9 +38,9 @@ func NewRoleCtl(service *containersvc.Service) *RoleCtl {
 // @Success      200  {object}   swagger.PaginatorResponse{data=[]authtfm.RoleResp}
 // @Router       /roles [get]
 func (ctl *RoleCtl) All(c *gin.Context) {
-	ctl.BasePrepare(c)
+	clientRequest := contRequest.InitRequest(c)
 
-	roles, paginator, err := ctl.Service.Role.All(ctl.Request)
+	roles, paginator, err := ctl.Service.Role.All(clientRequest)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -68,8 +69,8 @@ func (ctl *RoleCtl) GetByID(c *gin.Context) {
 		response.RespondError(c, errcode.Validation.New("Role id is required!"))
 		return
 	}
-	ctl.BasePrepare(c)
-	role, err := ctl.Service.Role.Find(ctl.Request, roleID)
+	clientRequest := contRequest.InitRequest(c)
+	role, err := ctl.Service.Role.Find(clientRequest, roleID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -93,15 +94,15 @@ func (ctl *RoleCtl) GetByID(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=authtfm.RoleResp}
 // @Router       /roles [post]
 func (ctl *RoleCtl) Store(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("roles.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "roles.create_update") {
 		return
 	}
 	var params request.NewRole
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	role, err := ctl.Service.Role.Store(ctl.Request, &params)
+	role, err := ctl.Service.Role.Store(clientRequest, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -126,8 +127,8 @@ func (ctl *RoleCtl) Store(c *gin.Context) {
 // @Success      200  {object}   swagger.ResponseWithData{data=authtfm.RoleResp}
 // @Router       /roles/{id} [put]
 func (ctl *RoleCtl) Update(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("roles.create_update") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "roles.create_update") {
 		return
 	}
 	roleID := c.Param("roleID")
@@ -137,10 +138,10 @@ func (ctl *RoleCtl) Update(c *gin.Context) {
 	}
 
 	var params request.UpdateRole
-	if err := ctl.Request.SetPostParams(&params); err != nil {
+	if err := clientRequest.SetPostParams(&params); err != nil {
 		return
 	}
-	role, err := ctl.Service.Role.Update(ctl.Request, roleID, &params)
+	role, err := ctl.Service.Role.Update(clientRequest, roleID, &params)
 	if err != nil {
 		response.RespondError(c, err)
 		return
@@ -164,8 +165,8 @@ func (ctl *RoleCtl) Update(c *gin.Context) {
 // @Success      201  {object}   swagger.ResponseWithData{data=boolean}
 // @Router       /roles/{id} [delete]
 func (ctl *RoleCtl) Delete(c *gin.Context) {
-	ctl.BasePrepare(c)
-	if !ctl.HasPermissions("roles.delete") {
+	clientRequest := contRequest.InitRequest(c)
+	if !ctl.HasPermissions(clientRequest, "roles.delete") {
 		return
 	}
 	roleID := c.Param("roleID")
@@ -174,7 +175,7 @@ func (ctl *RoleCtl) Delete(c *gin.Context) {
 		return
 	}
 
-	err := ctl.Service.Role.Delete(ctl.Request, roleID)
+	err := ctl.Service.Role.Delete(clientRequest, roleID)
 	if err != nil {
 		response.RespondError(c, err)
 		return
