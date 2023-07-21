@@ -12,7 +12,7 @@ const debug = require('../../lib/debug')('migration-generator');
 const chalk = require('chalk');
 const path = require('path');
 const helpers = require('../helpers');
-const {format2Digit, getGormType} = require('../helpers');
+const {format2Digit} = require('../helpers');
 const {snakeCase} = require('change-case');
 const _ = require('lodash');
 const MIGRATION_TEMPLATE_PATH = 'migration.go.ejs';
@@ -35,9 +35,7 @@ module.exports = class MigrationGenerator extends ArtifactGenerator {
     };
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
 
-    this.artifactInfo.getGormType = getGormType;
-
-    this.artifactInfo.listPackageImport = helpers.getListPackage();
+    this.artifactInfo.helpers = helpers;
 
     return super._setupGenerator();
   }

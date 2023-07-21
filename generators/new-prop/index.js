@@ -11,7 +11,7 @@ const debug = require('../../lib/debug')('new-prop-generator');
 const path = require('path');
 const helpers = require('../helpers');
 const ModelGenerator = require('../model');
-const {newPropsPlaceholder, configDir, getGormType, format2Digit, toGolangClassName} = require('../helpers');
+const {newPropsPlaceholder, configDir, format2Digit, toGolangClassName} = require('../helpers');
 const {toFileName} = require('../../lib/utils');
 const g = require('../../lib/globalize');
 const CUSTOM_CHOICE_VALUE = 'RyCustomNewProp';
@@ -29,7 +29,7 @@ module.exports = class NewPropGenerator extends ModelGenerator {
       type: 'newProp',
       rootDir: helpers.sourceRootDir,
       databaseRootDir: helpers.databaseRootDir,
-      listPackageImport: helpers.getListPackage(),
+      helpers: helpers
     };
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
@@ -37,9 +37,6 @@ module.exports = class NewPropGenerator extends ModelGenerator {
     this.artifactInfo.modelSchemeOutDir = path.resolve(this.destinationPath(), helpers.ryConfigDir);
 
     this.artifactInfo.migrationOutDir = path.resolve(this.artifactInfo.databaseRootDir, helpers.migrationDir);
-
-    this.artifactInfo.getGormType = getGormType;
-
     return super._setupGenerator();
   }
 
@@ -135,7 +132,6 @@ module.exports = class NewPropGenerator extends ModelGenerator {
       this.artifactInfo.migrationOutFile,
     );
     this.artifactInfo.type = 'newProp'
-
     this.copyTemplatedFiles(
       path.resolve(__dirname, `../migration/templates/${MIGRATION_ADD_COL_TEMPLATE_PATH}`),
       migrationOutputPath,

@@ -1,11 +1,7 @@
 <% if (modelScheme && modelScheme.props) { -%>
 	<% propArr = Object.values(modelScheme.props) -%>
-	<% for (var l = propArr.length, i = 0; i < l; i++) { -%>
-		<% prop = propArr[i] -%>
-		<% package = listPackageImport[prop.orgType] -%>
-		<% if (package) { -%>
-			"<%=package%>"
-		<% } -%>
-		<% listPackageImport[prop.orgType] = null -%>
-	<% } -%>
+	<% propArr = helpers.importPackage(propArr) -%>
+	<% propArr.forEach((package) => { -%>
+		"<%=package%>"
+	<% }) -%>
 <% } -%>

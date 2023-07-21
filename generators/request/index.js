@@ -34,7 +34,7 @@ module.exports = class RequestGenerator extends ArtifactGenerator {
     this.artifactInfo.requestDir = path.resolve(this.artifactInfo.rootDir, helpers.requestDir);
 
     this.artifactInfo.modelDir = path.resolve(this.artifactInfo.rootDir, helpers.modelDir);
-    this.artifactInfo.listPackageImport = helpers.getListPackage();
+    this.artifactInfo.helpers = helpers;
 
     return super._setupGenerator();
   }

@@ -6,14 +6,14 @@
  */
 
 const {GO_BUILTIN_TYPES} = require('../../model/property-definition');
-const {convertToGoLangType} = require('../../helpers');
+const {filterModelType} = require('../../helpers');
 
 // @IMPORTANT: Need to be synced with the gen-config/templates/model-scheme.js.ejs file!!
 exports.generateNewProps = properties => {
   const newProps = [];
   Object.entries(properties).forEach(([propKey, propVal]) => {
     let orgGoType = propVal.type === 'uuid' ? 'string' : propVal.type;
-    propVal.goType = convertToGoLangType(propVal.goType)
+    propVal.goType = filterModelType(propVal)
     if (propVal.type === 'array') {
       if (GO_BUILTIN_TYPES.includes(propVal.itemType)) {
         orgGoType = propVal.itemType;
@@ -24,6 +24,7 @@ exports.generateNewProps = properties => {
     newProps.push({
       name: propVal.pascalName,
       propKey: propKey,
+      type: propVal.type,
       orgType: orgGoType,
       goType: propVal.goType,
       isRequired: propVal.required,

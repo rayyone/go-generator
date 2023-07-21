@@ -54,7 +54,7 @@ function createPropertyTemplateData(val, propName) {
   }
 
   // Convert Type to include '' for template
-  val.type = `${val.goType}`;
+  // val.type = `${val.goType}`;
 
   if (val.itemType) {
     val.itemType = `${val.itemType}`;
