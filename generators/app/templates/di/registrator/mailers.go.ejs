@@ -9,6 +9,7 @@ import (
 var MailerSet = wire.NewSet(
 	mails.NewMailer,
 	mails.NewDefaultProvider,
+	mails.NewDefaultSender,
 	GetMailProviderConfig,
 )
 

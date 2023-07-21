@@ -18,7 +18,7 @@
     "rygo": "./bin/cli-main.js"
   },
   "repository": {
-    "url": "https://github.com/rayyone/go-generator",
+    "url": "git+https://github.com/rayyone/go-generator.git",
     "type": "git"
   },
   "engines": {
