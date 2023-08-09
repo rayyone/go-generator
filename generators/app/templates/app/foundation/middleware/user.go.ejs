@@ -42,6 +42,8 @@ func UserAuthentication(service *containersvc.Service) gin.HandlerFunc {
 		}
 		if accessTokenObj.TokenExpiredAt.Before(time.Now()) {
 			response.RespondError(c, errcode.Unauthorized.New("Expired"))
+			c.Abort()
+			return
 		}
 
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
