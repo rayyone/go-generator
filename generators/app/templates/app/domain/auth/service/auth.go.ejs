@@ -275,7 +275,7 @@ func (s *AuthSvc) VerifyAccount(r *container.Request, params request.AuthVerify)
 	}
 
 	if err := s.Repo.VerificationCode.Delete(r, verificationCode.ID); err != nil {
-		return nil, errcode.Validation.New("Cannot delete Verification COde")
+		return nil, errcode.Validation.New("Cannot delete Verification Code")
 	}
 
 	return &user, nil
@@ -387,7 +387,7 @@ func (s *AuthSvc) ResetPassword(r *container.Request, params request.AuthResetPa
 	user.GetAccessors()
 
 	if err := s.Repo.VerificationCode.Delete(r, verificationCode.ID); err != nil {
-		return nil, errcode.Validation.New("Cannot Delete Verification COde")
+		return nil, errcode.Validation.New("Cannot Delete Verification Code")
 	}
 
 	return &user, nil

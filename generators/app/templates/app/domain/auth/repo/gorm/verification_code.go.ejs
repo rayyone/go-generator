@@ -44,13 +44,13 @@ func NewVerificationCodeGorm() *VerificationCodeGorm {
 
 func (g *VerificationCodeGorm) FindByUserCode(r *container.Request, verificationType constant.VerificationType, userID string, code string) (*model.VerificationCode, error) {
 	var verificationCode model.VerificationCode
-	_, err := g.FindBy(r, &verificationCode, "type = ? AND code = ? AND user_id = ?", verificationType, code, userID)
+	_, err := g.FirstBy(r, &verificationCode, "type = ? AND code = ? AND user_id = ?", verificationType, code, userID)
 	return &verificationCode, err
 }
 
 func (g *VerificationCodeGorm) FindByUser(r *container.Request, verificationType constant.VerificationType, userID string) (*model.VerificationCode, error) {
 	var verificationCode model.VerificationCode
-	_, err := g.FindBy(r, &verificationCode, "type = ? AND user_id = ?", verificationType, userID)
+	_, err := g.FirstBy(r, &verificationCode, "type = ? AND user_id = ?", verificationType, userID)
 	return &verificationCode, err
 }
 
