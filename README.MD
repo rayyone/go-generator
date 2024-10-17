@@ -5,6 +5,12 @@ Rayyone Golang project was designed from the ground up to be highly extensible a
 
 Besides, Rayyone Golang Generator tool enables you to quickly create RESTful APIs using CLI
 
+### Install
+
+```
+npm install
+npm i -g .
+```
 
 ### Code Generator
 Quickly scaffold a new project
